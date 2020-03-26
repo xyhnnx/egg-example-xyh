@@ -16,8 +16,11 @@ module.exports = appInfo => {
   config.keys = appInfo.name + '_1585205294404_5120';
 
   // add your middleware config here
-  config.middleware = [];
-
+  // 这里配置了gzip中间件；会在每次刷新页面时候执行middleware/gzip方法
+  // config.middleware = [ 'gzip' ];
+  // config.gzip = {
+  //   threshold: 1024, // 小于 1k 的响应体不压缩
+  // };
   // add your user config here
   const userConfig = {
     // myAppName: 'egg',

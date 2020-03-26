@@ -23,6 +23,19 @@ module.exports = appInfo => {
     // myAppName: 'egg',
   };
 
+  // 添加 news 的配置项
+  config.news = {
+    pageSize: 5,
+    serverUrl: 'https://hacker-news.firebaseio.com/v0',
+  };
+  // 添加 view 配置
+  config.view = {
+    defaultViewEngine: 'nunjucks',
+    mapping: {
+      '.tpl': 'nunjucks',
+    },
+  };
+
   return {
     ...config,
     ...userConfig,

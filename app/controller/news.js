@@ -7,6 +7,7 @@ class NewsController extends Controller {
     const ctx = this.ctx;
     const page = ctx.query.page || 1;
     const newsList = await ctx.service.news.list(page);
+    // console.log(this.ctx.isIOS)
     await this.ctx.render('news/list.tpl', { list: newsList });
   }
 }

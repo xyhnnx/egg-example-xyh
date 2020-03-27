@@ -25,6 +25,15 @@ module.exports = appInfo => {
   const userConfig = {
     // myAppName: 'egg',
   };
+  // 日志目录
+  config.logger = {
+    dir: '/home/root/logs/egg-example-xyh',
+    appLogName: `${appInfo.name}-web.log`,
+    coreLogName: 'egg-web.log',
+    agentLogName: 'egg-agent.log',
+    errorLogName: 'common-error.log',
+    outputJSON: true,
+  }
 
   // 添加 news 的配置项
   config.news = {

@@ -10,4 +10,6 @@ module.exports = app => {
   // const gzip = app.middleware.gzip({ threshold: 1024 });
   // router.get('/needgzip', gzip, controller.news.list);
   router.get('/news', controller.news.list);
+  router.get('/images', controller.images.list);
+  // router.post('createPost', '/api/posts', controller.post.create);
 };

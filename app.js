@@ -19,14 +19,14 @@ module.exports = app => {
   });
   app.on('response', ctx => {
     // ctx.starttime is set by framework
-    const used = Date.now() - ctx.starttime;
-    console.log('-----------------used-------------');
-    // console.log(used);
-    // log total cost
-    app.logger.debug('debug info xyh');
-    app.logger.info('response耗时 %d ms', used);
-    app.logger.warn('warning!');
-
-    app.logger.error('someErrorObj');
+    // const used = Date.now() - ctx.starttime;
+    // console.log('-----------------used-------------');
+    // // console.log(used);
+    // // log total cost
+    // app.logger.debug('debug info xyh');
+    // app.logger.info('response耗时 %d ms', used);
+    // app.logger.warn('warning!');
+    //
+    // app.logger.error('someErrorObj');
   });
 };

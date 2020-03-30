@@ -1,6 +1,10 @@
 // app/service/news.js
 'use strict';
 const Service = require('egg').Service;
+// Redis工具
+const RedisUtil = require('../util/redis');
+// Redis实例
+let redis = null;
 
 class NewsService extends Service {
   async list() {
@@ -25,14 +29,40 @@ class NewsService extends Service {
     //   })
     // );
     // return newsList.map(res => res.data);
-    const arr = [];
-    for (let i = 0; i < 100; i++) {
-      arr.push({
-        label: `第${i}条news`,
-        value: i,
+    if (!redis) {
+      redis = new RedisUtil();
+      this.logger.info('创建Redis实例');
+    }
+    const res = await redis.exec('lrange', 'newList', 0, -1);
+    const arr = []
+    if (res && res.length) {
+      res.forEach(e => {
+        const data = JSON.parse(e)
+        arr.push({
+          label: data.title,
+          value: data.content,
+        });
       });
     }
     return arr;
+  }
+
+  async detail(id) {
+    console.log(id);
+  }
+
+  async editData(data) {
+    if (data) { // 这里将数据存入redis
+      // 创建Redis实例
+      if (!redis) {
+        redis = new RedisUtil();
+        this.logger.info('创建Redis实例');
+      }
+      // redis.del('newList');
+      redis.rpush('newList', JSON.stringify(data));
+      // const res = await redis.exec('lrange', 'newList', 0, -1);
+      // console.log(res);
+    }
   }
 }
 

@@ -81,11 +81,10 @@ class RedisUtil {
   async exec(cmd, ...args) {
     return await this.instance[cmd](...args);
   }
-
   // 运行lua脚本 {lua脚本，key的数量，key,key2... ，value,value2...}
-  async eval(...args) {
-    return this.instance.eval(...args);
-  }
+  // async eval(...args) {
+  //   return this.instance.eval(...args);
+  // }
 }
 
 module.exports = RedisUtil;

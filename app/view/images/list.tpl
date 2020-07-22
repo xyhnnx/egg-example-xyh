@@ -8,12 +8,22 @@
             {% for item in list %}
             <li class="item">
                 {{ item.label}}
-                <img src="{{item.thumbURL}}"/>
+                <img src="{{item.src}}"/>
             </li>
             {% endfor %}
         </ul>
     </body>
     <style>
-
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        ul {
+            list-style: none;
+        }
+        .news-view {
+            display: flex;
+            flex-wrap: wrap;
+        }
     </style>
 </html>

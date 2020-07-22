@@ -15,6 +15,9 @@ class NewsController extends Controller {
         word: ctx.query.search,
       },
     });
+    result.data.data.forEach(e => {
+      e.src = e.thumbURL
+    })
     await this.ctx.render('images/list.tpl', { list: result.data.data });
   }
 
@@ -33,11 +36,13 @@ class NewsController extends Controller {
     try {
       // 通过参数检查
       if (paramsCheck) {
-        const score = await ctx.service.images.getPageImages(data);
+        const result = await ctx.service.images.getPageImages(data);
+        // 如果要渲染
+        // await this.ctx.render('images/list.tpl', { list: result.data });
         ctx.body = {
           status: 0,
           message: '获取成功',
-          data: score
+          data: result
         };
       } else {
         ctx.body = {

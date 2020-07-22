@@ -25,5 +25,8 @@
             display: flex;
             flex-wrap: wrap;
         }
+        img{
+            max-width: 100px;
+        }
     </style>
 </html>

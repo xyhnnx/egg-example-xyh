@@ -47,7 +47,9 @@ class ImagesService extends Service {
       url = 'https://image.baidu.com/search/index?tn=baiduimage&ipn=r&ct=201326592&cl=2&lm=-1&st=-1&fr=&sf=1&fmq=1567133149621_R&pv=&ic=0&nc=1&z=0&hd=0&latest=0&copyright=0&se=1&showtab=0&fb=0&width=&height=&face=0&istype=2&ie=utf-8&sid=&word=%E5%A3%81%E7%BA%B8';
       console.log(`渲染URL：${url}`);
       // await page.setCookie({name: 'token', value: JSON.stringify(token), url: config.webUrl})
-      await page.goto(url, { timeout: 60000 });
+      // 可设置页面宽高大一些；就会多获取数据
+      page.setViewport({width: 2000, height: 50000})
+      await page.goto(url, { timeout: 60000, waitUntil: 'networkidle2' });
       returnData = await page.evaluate(() => {
         // eslint-disable-next-line no-undef
         const imgdom = Array.from(document.getElementsByTagName('img'));

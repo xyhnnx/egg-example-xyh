@@ -38,12 +38,12 @@ class NewsController extends Controller {
       if (paramsCheck) {
         const result = await ctx.service.images.getPageImages(data);
         // 如果要渲染
-        // await this.ctx.render('images/list.tpl', { list: result.data });
-        ctx.body = {
-          status: 0,
-          message: '获取成功',
-          data: result
-        };
+        await this.ctx.render('images/list.tpl', { list: result.data });
+        // ctx.body = {
+        //   status: 0,
+        //   message: '获取成功',
+        //   data: result
+        // };
       } else {
         ctx.body = {
           status: 1,

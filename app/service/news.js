@@ -8,36 +8,15 @@ let redis = null;
 
 class NewsService extends Service {
   async list() {
-    // read config
-    // const { serverUrl, pageSize } = this.config.news;
-    //
-    // // use build-in http client to GET hacker-news api
-    // const { data: idList } = await this.ctx.curl(`${serverUrl}/topstories.json`, {
-    //   data: {
-    //     orderBy: '"$key"',
-    //     startAt: `"${pageSize * (page - 1)}"`,
-    //     endAt: `"${pageSize * page - 1}"`,
-    //   },
-    //   dataType: 'json',
-    // });
-    //
-    // // parallel GET detail
-    // const newsList = await Promise.all(
-    //   Object.keys(idList).map(key => {
-    //     const url = `${serverUrl}/item/${idList[key]}.json`;
-    //     return this.ctx.curl(url, { dataType: 'json' });
-    //   })
-    // );
-    // return newsList.map(res => res.data);
     if (!redis) {
       redis = new RedisUtil();
       this.logger.info('创建Redis实例');
     }
     const res = await redis.exec('lrange', 'newList', 0, -1);
-    const arr = []
+    const arr = [];
     if (res && res.length) {
       res.forEach(e => {
-        const data = JSON.parse(e)
+        const data = JSON.parse(e);
         arr.push({
           label: data.title,
           value: data.content,
@@ -60,8 +39,21 @@ class NewsService extends Service {
       }
       // redis.del('newList');
       redis.rpush('newList', JSON.stringify(data));
-      // const res = await redis.exec('lrange', 'newList', 0, -1);
-      // console.log(res);
+      // await redis.exec('hset', 'hash-test', 'title', data.title);
+      // const restest1 = await redis.exec('hgetall', 'hash-test'); // 获取所有
+      // console.log(restest1, 'res1')
+      // const res1 = await redis.exec('hget', 'hash-test', 'title'); // 获取key为title的value
+
+      const res = await redis.exec('lrange', 'newList', 0, -1); // 获取list所有
+      const arr = [];
+      res.forEach((e, index) => {
+        arr.push(`key-${index}`, e);
+      });
+      // Hmset 命令用于同时将多个 field-value (字段-值)对设置到哈希表中。
+      await redis.exec('hmset', 'xyh-hash-1', ...arr);
+      const res1 = await redis.exec('hgetall', 'xyh-hash-1'); // 获取所有哈希
+      console.log('----------------res1');
+      console.log(res1);
     }
   }
 }

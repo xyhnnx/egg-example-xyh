@@ -14,5 +14,6 @@ module.exports = app => {
   router.post('/new-detail', controller.news.editData);
   router.get('/images', controller.images.list);
   router.get('/page-images', controller.images.getPageImages);
+  router.get('/page-images2', controller.images.getPageImages2);
   // router.post('createPost', '/api/posts', controller.post.create);
 };

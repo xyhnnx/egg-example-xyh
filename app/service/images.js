@@ -2,12 +2,30 @@
 'use strict';
 const Service = require('egg').Service;
 const path = require('path');
-// 浏览器连接工具
+const request = require('request');
+const cheerio = require('cheerio');
+const fetch = require('../util/fetch')
+// 浏览器连接工具`
 const BrowserUtil = require('../util/browser');
+
+const http = (uri) => {
+  return new Promise((resolve, reject) => {
+    request({
+      uri: uri,
+      method: 'GET'
+    }, (err, response, body) => {
+      if (err) {
+        console.log(err)
+        reject(err)
+      }
+      resolve(body)
+    })
+  })
+}
 
 class ImagesService extends Service {
   async getPageImages(data) {
-    console.log('data=',data)
+    console.log('data=' ,data)
     let returnData;
     // 浏览器
     let browser;
@@ -78,6 +96,50 @@ class ImagesService extends Service {
       await page.close();
       // 断开浏览器连接
       browser.disconnect();
+      // 抛出异常
+      throw err;
+    }
+    console.log(`页面耗时: ${new Date() - startTime}ms，渲染页URL：${url}`);
+    return {
+      data: returnData
+    }
+  }
+  async getPageImages2(data) {
+    console.log('data=', data)
+    let returnData;
+
+    // 打开页面时间
+    const startTime = new Date();
+    // 渲染URL
+    const url = 'http://100.xiaobeidy.com';
+    try {
+
+      // 使用request.js库发送get请求
+      // const html = await http(url)
+      const html = await fetch({
+        url,
+        params: {
+          s: '肖申克'
+        },
+        method: 'get',
+        timeout: 30000,
+        // headers: {
+        // }
+      })
+      // 载入并初始化cheerio
+      const $ = cheerio.load(html)
+      // 取出目标节点，即带article-list-link css类的<a>
+      const linksDom = $('.excerpt .focus')
+      console.log(linksDom.length)
+      // // 遍历dom集数组
+      linksDom.each((index, item) => {
+        // console.log(index, item)
+        console.log($(item).attr('href'))
+      });
+    } catch (err) {
+      this.logger.error(`page发生错误：${url}`);
+      // 关闭页面
+      // 断开浏览器连接
       // 抛出异常
       throw err;
     }

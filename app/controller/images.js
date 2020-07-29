@@ -85,6 +85,44 @@ class NewsController extends Controller {
       };
     }
   }
+  async getPageImages2() {
+    const { ctx } = this;
+    // const data = ctx.request.body
+    const data = ctx.query;
+    // 参数校验
+    const paramsList = [ 'search' ]
+    let paramsCheck = true;
+    for (const item of paramsList) {
+      if (!data[item]) {
+        paramsCheck = false;
+      }
+    }
+    try {
+      // 通过参数检查
+      if (paramsCheck) {
+        const result = await ctx.service.images.getPageImages2(data);
+        // 如果要渲染
+        await this.ctx.render('images/list.tpl', { list: result.data });
+        // ctx.body = {
+        //   status: 0,
+        //   message: '获取成功',
+        //   data: result
+        // };
+      } else {
+        ctx.body = {
+          status: 1,
+          message: '参数不完整',
+          data: null
+        };
+      }
+    } catch (e) {
+      ctx.body = {
+        status: 1,
+        message: '服务器内部错误',
+        data: e
+      };
+    }
+  }
 }
 
 module.exports = NewsController;

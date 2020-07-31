@@ -1,31 +1,31 @@
 // app/service/news.js
 'use strict';
 const Service = require('egg').Service;
-const path = require('path');
-const request = require('request');
+// const path = require('path');
+// const request = require('request');
 const cheerio = require('cheerio');
 const fetch = require('../util/fetch')
 // 浏览器连接工具`
 const BrowserUtil = require('../util/browser');
 
-const http = (uri) => {
-  return new Promise((resolve, reject) => {
-    request({
-      uri: uri,
-      method: 'GET'
-    }, (err, response, body) => {
-      if (err) {
-        console.log(err)
-        reject(err)
-      }
-      resolve(body)
-    })
-  })
-}
+// const http = (uri) => {
+//   return new Promise((resolve, reject) => {
+//     request({
+//       uri: uri,
+//       method: 'GET'
+//     }, (err, response, body) => {
+//       if (err) {
+//         console.log(err)
+//         reject(err)
+//       }
+//       resolve(body)
+//     })
+//   })
+// }
 
 class ImagesService extends Service {
   async getPageImages(data) {
-    console.log('data=' ,data)
+    console.log('data=', data)
     let returnData;
     // 浏览器
     let browser;
@@ -35,8 +35,7 @@ class ImagesService extends Service {
     } catch (err) {
       this.logger.info(`连接至浏览器报错: ${JSON.stringify(err)}`);
       try {
-        this.logger.info('重启浏览器成功');
-        await BrowserUtil.init('wrongTopic');
+        await BrowserUtil.init('page-image');
         browser = await BrowserUtil.connect('page-image');
       } catch (err2) {
         const text = `重启浏览器失败，原因:${JSON.stringify(err2)}`;
@@ -105,7 +104,6 @@ class ImagesService extends Service {
     }
   }
   async getPageImages2(data) {
-    console.log('data=', data)
     let returnData;
 
     // 打开页面时间
@@ -113,29 +111,65 @@ class ImagesService extends Service {
     // 渲染URL
     const url = 'http://100.xiaobeidy.com';
     try {
-
       // 使用request.js库发送get请求
       // const html = await http(url)
       const html = await fetch({
         url,
         params: {
-          s: '肖申克'
+          s: data.search
         },
         method: 'get',
-        timeout: 30000,
-        // headers: {
-        // }
+        timeout: 60000,
       })
       // 载入并初始化cheerio
       const $ = cheerio.load(html)
       // 取出目标节点，即带article-list-link css类的<a>
       const linksDom = $('.excerpt .focus')
-      console.log(linksDom.length)
+      const fetchPages = []
       // // 遍历dom集数组
       linksDom.each((index, item) => {
-        // console.log(index, item)
-        console.log($(item).attr('href'))
-      });
+        fetchPages.push(
+          fetch({
+            url: $(item).attr('href'),
+            method: 'get',
+            timeout: 600000,
+          })
+        )
+      })
+      console.log(`开始请求${fetchPages.length}个页面`)
+      const pageDetailArr = await Promise.all(fetchPages)
+      console.log(`请求${pageDetailArr.length}个页面结束`)
+      const dataArr = pageDetailArr.map((html, index) => {
+        try {
+          console.log(`正在爬取第${index + 1}个页面数据`)
+          const $ = cheerio.load(html)
+          // 取出目标节点，即带article-list-link css类的<a>
+          const $mainDom = $($('.content-wrap')[0])
+          const webUrl = $mainDom.find('.article-title').find('a').attr('href')
+          const title = $mainDom.find('.article-title').text()
+          const time = $mainDom.find('.article-meta .item').text().slice(0, 10)
+          const imgSrc = $mainDom.find('.article-content img').eq(1).attr('src')
+          const resource = []
+          $($mainDom.find('.article-content').html().split('<hr>')[1]).find('a').each((index, item) => {
+            resource.push({
+              src: $(item).attr('href'),
+              text: $(item).parent().text()
+            })
+          });
+
+          return {
+            webUrl,
+            title,
+            time,
+            imgSrc,
+            resource
+          }
+        } catch (e) {
+          console.log(`爬取第${index + 1}个页面出错`)
+          return false
+        }
+      })
+      returnData = dataArr.filter(e => !!e)
     } catch (err) {
       this.logger.error(`page发生错误：${url}`);
       // 关闭页面

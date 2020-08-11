@@ -250,7 +250,8 @@ class ImagesService extends Service {
     const http = require('http');
     const fetch = require('../util/fetch')
     let res = await fetch({
-      url
+      url,
+      timeout: 0
     })
     console.log('res----', res)
     // return new Promise(resolve => {

@@ -3,6 +3,7 @@
 module.exports = app => {
   app.appData = {
     test: 'test',
+    outputDir: '/egg-example-xyh-output'
   };
   app.once('server', server => {
     // console.log(server);

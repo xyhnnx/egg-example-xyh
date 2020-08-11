@@ -8,7 +8,8 @@ const fetch = require('../util/fetch');
 // 浏览器连接工具`
 const BrowserUtil = require('../util/browser');
 const { dateFormat } = require('../util/date-time-utils');
-const { downloadFile } = require('../util/util');
+const { downloadFile, makeDir } = require('../util/util');
+
 // const http = (uri) => {
 //   return new Promise((resolve, reject) => {
 //     request({
@@ -132,8 +133,7 @@ class ImagesService extends Service {
       linksDom.each((index, item) => {
         fetchPages.push(
           fetch({
-            url: $(item)
-              .attr('href'),
+            url: $(item).attr('href'),
             method: 'get',
             timeout: 600000,
           })
@@ -148,31 +148,17 @@ class ImagesService extends Service {
           const $ = cheerio.load(html);
           // 取出目标节点，即带article-list-link css类的<a>
           const $mainDom = $($('.content-wrap')[0]);
-          const webUrl = $mainDom.find('.article-title')
-            .find('a')
-            .attr('href');
-          const title = $mainDom.find('.article-title')
-            .text();
-          const time = $mainDom.find('.article-meta .item')
-            .text()
-            .slice(0, 10);
-          const imgSrc = $mainDom.find('.article-content img')
-            .eq(1)
-            .attr('src');
+          const webUrl = $mainDom.find('.article-title').find('a').attr('href');
+          const title = $mainDom.find('.article-title').text();
+          const time = $mainDom.find('.article-meta .item').text().slice(0, 10);
+          const imgSrc = $mainDom.find('.article-content img').eq(1).attr('src');
           const resource = [];
-          $($mainDom.find('.article-content')
-            .html()
-            .split('<hr>')[1])
-            .find('a')
-            .each((index, item) => {
-              resource.push({
-                src: $(item)
-                  .attr('href'),
-                text: $(item)
-                  .parent()
-                  .text()
-              });
+          $($mainDom.find('.article-content').html().split('<hr>')[1]).find('a').each((index, item) => {
+            resource.push({
+              src: $(item).attr('href'),
+              text: $(item).parent().text()
             });
+          });
 
           return {
             webUrl,
@@ -232,6 +218,62 @@ class ImagesService extends Service {
     return {
       data: returnData
     };
+  }
+
+  // 下载bing图片
+  async getPageImages4(data) {
+    console.log('data=', data);
+    let returnData;
+    // 浏览器
+    // 渲染URL
+    const url = `https://uploadbeta.com/api/pictures/random/?key=%E6%8E%A8%E5%A5%B3%E9%83%8E&t=${new Date().getTime()}`
+    // const url = `http://6d65-me-oacid-1300610701.tcb.qcloud.la/BING/20200801.jpg`
+    try {
+      // for (let i = 0; i < 10; i++) {
+      //
+      // }
+      console.log(this.app.appData.outputDir)
+      makeDir(this.app.appData.outputDir)
+      this.saveImg(url, `${this.app.appData.outputDir}/${new Date().getTime()}.jpg`)
+      returnData = []
+    } catch (err) {
+      this.logger.error('getPageImages4发生错误');
+    }
+    return {
+      data: returnData
+    };
+  }
+
+  async saveImg(url, path) {
+    console.log('saveImg--------------')
+    const fs = require('fs');
+    const http = require('http');
+    const fetch = require('../util/fetch')
+    let res = await fetch({
+      url
+    })
+    console.log('res----', res)
+    // return new Promise(resolve => {
+    //   console.log('xxx')
+    //   http.get(url, function (req, res) {
+    //     let imgData = '';
+    //     req.setEncoding('binary');
+    //     req.on('data', function (chunk) {
+    //       console.log('on data')
+    //       imgData += chunk;
+    //     })
+    //     req.on('end', function () {
+    //       console.log('end')
+    //       fs.writeFile(path, imgData, 'binary', function (err) {
+    //         console.log('保存图片成功' + path)
+    //       })
+    //       resolve()
+    //     })
+    //     req.on('error', function () {
+    //       console.log('error---')
+    //     })
+    //   })
+    // })
   }
 }
 

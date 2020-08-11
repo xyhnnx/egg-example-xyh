@@ -139,6 +139,22 @@ class NewsController extends Controller {
       };
     }
   }
+  async getPageImages4() {
+    const { ctx } = this;
+    // const data = ctx.request.body
+    const data = ctx.query;
+    try {
+      const result = await ctx.service.images.getPageImages4(data);
+      // 如果要渲染
+      await this.ctx.render('images/list.tpl', { list: result.data });
+    } catch (e) {
+      ctx.body = {
+        status: 1,
+        message: '服务器内部错误',
+        data: e
+      };
+    }
+  }
 }
 
 module.exports = NewsController;

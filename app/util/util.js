@@ -179,5 +179,6 @@ module.exports = {
   getServerIP,
   getServerPid,
   timeout,
+  makeDir,
   downloadFile
 };

@@ -4,10 +4,11 @@ const Service = require('egg').Service;
 // const path = require('path');
 // const request = require('request');
 const cheerio = require('cheerio');
-const fetch = require('../util/fetch')
+const fetch = require('../util/fetch');
 // 浏览器连接工具`
 const BrowserUtil = require('../util/browser');
-
+const { dateFormat } = require('../util/date-time-utils');
+const { downloadFile } = require('../util/util');
 // const http = (uri) => {
 //   return new Promise((resolve, reject) => {
 //     request({
@@ -25,7 +26,7 @@ const BrowserUtil = require('../util/browser');
 
 class ImagesService extends Service {
   async getPageImages(data) {
-    console.log('data=', data)
+    console.log('data=', data);
     let returnData;
     // 浏览器
     let browser;
@@ -65,7 +66,7 @@ class ImagesService extends Service {
       console.log(`渲染URL：${url}`);
       // await page.setCookie({name: 'token', value: JSON.stringify(token), url: config.webUrl})
       // 可设置页面宽高大一些；就会多获取数据
-      page.setViewport({width: 2000, height: 1000})
+      page.setViewport({ width: 2000, height: 1000 });
       await page.goto(url, { timeout: 60000, waitUntil: 'networkidle2' });
       returnData = await page.evaluate(() => {
         // eslint-disable-next-line no-undef
@@ -101,8 +102,9 @@ class ImagesService extends Service {
     console.log(`页面耗时: ${new Date() - startTime}ms，渲染页URL：${url}`);
     return {
       data: returnData
-    }
+    };
   }
+
   async getPageImages2(data) {
     let returnData;
 
@@ -120,42 +122,57 @@ class ImagesService extends Service {
         },
         method: 'get',
         timeout: 60000,
-      })
+      });
       // 载入并初始化cheerio
-      const $ = cheerio.load(html)
+      const $ = cheerio.load(html);
       // 取出目标节点，即带article-list-link css类的<a>
-      const linksDom = $('.excerpt .focus')
-      const fetchPages = []
+      const linksDom = $('.excerpt .focus');
+      const fetchPages = [];
       // // 遍历dom集数组
       linksDom.each((index, item) => {
         fetchPages.push(
           fetch({
-            url: $(item).attr('href'),
+            url: $(item)
+              .attr('href'),
             method: 'get',
             timeout: 600000,
           })
-        )
-      })
-      console.log(`开始请求${fetchPages.length}个页面`)
-      const pageDetailArr = await Promise.all(fetchPages)
-      console.log(`请求${pageDetailArr.length}个页面结束`)
+        );
+      });
+      console.log(`开始请求${fetchPages.length}个页面`);
+      const pageDetailArr = await Promise.all(fetchPages);
+      console.log(`请求${pageDetailArr.length}个页面结束`);
       const dataArr = pageDetailArr.map((html, index) => {
         try {
-          console.log(`正在爬取第${index + 1}个页面数据`)
-          const $ = cheerio.load(html)
+          console.log(`正在爬取第${index + 1}个页面数据`);
+          const $ = cheerio.load(html);
           // 取出目标节点，即带article-list-link css类的<a>
-          const $mainDom = $($('.content-wrap')[0])
-          const webUrl = $mainDom.find('.article-title').find('a').attr('href')
-          const title = $mainDom.find('.article-title').text()
-          const time = $mainDom.find('.article-meta .item').text().slice(0, 10)
-          const imgSrc = $mainDom.find('.article-content img').eq(1).attr('src')
-          const resource = []
-          $($mainDom.find('.article-content').html().split('<hr>')[1]).find('a').each((index, item) => {
-            resource.push({
-              src: $(item).attr('href'),
-              text: $(item).parent().text()
-            })
-          });
+          const $mainDom = $($('.content-wrap')[0]);
+          const webUrl = $mainDom.find('.article-title')
+            .find('a')
+            .attr('href');
+          const title = $mainDom.find('.article-title')
+            .text();
+          const time = $mainDom.find('.article-meta .item')
+            .text()
+            .slice(0, 10);
+          const imgSrc = $mainDom.find('.article-content img')
+            .eq(1)
+            .attr('src');
+          const resource = [];
+          $($mainDom.find('.article-content')
+            .html()
+            .split('<hr>')[1])
+            .find('a')
+            .each((index, item) => {
+              resource.push({
+                src: $(item)
+                  .attr('href'),
+                text: $(item)
+                  .parent()
+                  .text()
+              });
+            });
 
           return {
             webUrl,
@@ -163,13 +180,13 @@ class ImagesService extends Service {
             time,
             imgSrc,
             resource
-          }
+          };
         } catch (e) {
-          console.log(`爬取第${index + 1}个页面出错`)
-          return false
+          console.log(`爬取第${index + 1}个页面出错`);
+          return false;
         }
-      })
-      returnData = dataArr.filter(e => !!e)
+      });
+      returnData = dataArr.filter(e => !!e);
     } catch (err) {
       this.logger.error(`page发生错误：${url}`);
       // 关闭页面
@@ -180,7 +197,41 @@ class ImagesService extends Service {
     console.log(`页面耗时: ${new Date() - startTime}ms，渲染页URL：${url}`);
     return {
       data: returnData
+    };
+  }
+
+  // 下载bing图片
+  async getPageImages3(data) {
+    console.log('data=', data);
+    let returnData;
+    // 浏览器
+    // 渲染URL
+    const prefix = `https://6d65-me-oacid-1300610701.tcb.qcloud.la`;
+    try {
+      let stop = false;
+      let nowTime = new Date().getTime();
+      let arr = []
+      while (!stop) {
+        let timeStr = dateFormat(nowTime, 'yyyyMMdd')
+        let url = `${prefix}/BING/${timeStr}.jpg`
+        arr.push({
+          src: url,
+          label: timeStr,
+          url
+        })
+        nowTime = nowTime - (24 * 60 * 60 * 1000)
+        if (nowTime <= new Date('2019-01-01').getTime()) {
+          stop = true
+        }
+      }
+      downloadFile(arr)
+      returnData = arr
+    } catch (err) {
+      this.logger.error('getPageImages3发生错误');
     }
+    return {
+      data: returnData
+    };
   }
 }
 

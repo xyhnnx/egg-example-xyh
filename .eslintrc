@@ -3,6 +3,9 @@
   "rules": {
     "semi": 0,
     "strict": "off",
+    "quotes": "off",
+    "prefer-const": "off",
+    "no-unused-vars": "off",
     "newline-per-chained-call": "off",
     // 临时配置
     "object-curly-spacing": "off",

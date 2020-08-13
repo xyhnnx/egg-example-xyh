@@ -192,6 +192,7 @@ async function downloadFile(list, dirName, batch = true) {
 async function downloadFile2(list, dirName, batch = true) {
   const fileDir = `${outputDir}/${dirName || 'default'}/`
   makeDir(fileDir)
+  let sizeObj = {}
   let arr = []
   for (let i = 0; i < list.length; i++) {
     let item = list[i]
@@ -211,6 +212,17 @@ async function downloadFile2(list, dirName, batch = true) {
         });
 
         res.on("end", function() {
+          if (imgData.length < 500) { // 小于500字节 太小就不要了
+            console.log(`${url}--文件太小不要了`);
+            resolve()
+            return;
+          }
+          if (sizeObj[imgData.length]) { // 根据文件大小相同判断重复
+            console.log(`${url}--文件重复`);
+            resolve()
+            return
+          }
+          sizeObj[imgData.length] = 1
           fs.writeFile(savePath, imgData, "binary", function(err) {
             if (err) {
               console.log(`${url}--下载失败2`);

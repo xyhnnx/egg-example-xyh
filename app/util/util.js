@@ -152,24 +152,87 @@ function makeDir(dirpath, delExists = false) {
   return true;
 }
 const outputDir = '/egg-example-xyh-output'
-async function downloadFile(list) {
-  const fileDir = `${outputDir}/bing/`
+/*
+* list[]
+* {
+*   url: 必选，
+*   fileType: 可选
+*   fileName: 可选
+* }
+* */
+async function downloadFile(list, dirName, batch = true) {
+  const fileDir = `${outputDir}/${dirName || 'default'}/`
   makeDir(fileDir)
+  let arr = []
   for (let i = 0; i < list.length; i++) {
-    let item = list[i];
-    let url = item.url;
-    if (url) {
-      let fileName = item.fileName || url.slice(url.lastIndexOf('/') + 1, url.lastIndexOf('.')) || (1000 + i)
-      let fileType = url.substring(url.lastIndexOf('.') + 1);
-      let stream = fs.createWriteStream(path.join(fileDir, `${fileName}.${fileType}`));
-      request(url)
-        .pipe(stream)
-        .on('close', () => {
-          console.log(`${url}--下载完毕`);
-        });
+    let promiseItem = new Promise((resolve, reject) => {
+      let item = list[i];
+      let url = item.url;
+      if (url) {
+        let fileName = item.fileName || url.slice(url.lastIndexOf('/') + 1, url.lastIndexOf('.')) || (1000 + i)
+        let fileType = item.fileType || url.substring(url.lastIndexOf('.') + 1);
+        request(url)
+          .pipe(fs.createWriteStream(path.join(fileDir, `${fileName}.${fileType}`)))
+          .on('close', () => {
+            console.log(`${url}--下载完毕`);
+            resolve()
+          })
+      }
+    })
+    arr.push(promiseItem)
+  }
+  if (batch) { // 如果是并发
+    return Promise.all(arr)
+  } else {
+    for (let i = 0; i < arr.length; i++) {
+      await arr[i]
     }
   }
 }
+async function downloadFile2(list, dirName, batch = true) {
+  const fileDir = `${outputDir}/${dirName || 'default'}/`
+  makeDir(fileDir)
+  let arr = []
+  for (let i = 0; i < list.length; i++) {
+    let item = list[i]
+    let url = item.url
+    let fileName = item.fileName || url.slice(url.lastIndexOf('/') + 1, url.lastIndexOf('.')) || (1000 + i)
+    let fileType = item.fileType || url.substring(url.lastIndexOf('.') + 1);
+    let promiseItem = new Promise((resolve, reject) => {
+      const https = require('https')
+      const fs = require('fs');
+      const url = item.url
+      let savePath = path.join(fileDir, `${fileName}.${fileType}`)
+      https.get(url, function(res) {
+        let imgData = "";
+        res.setEncoding("binary"); // 一定要设置response的编码为binary否则会下载下来的图片打不开
+        res.on("data", function(chunk) { // 这步是我百度来的。。。。
+          imgData += chunk;
+        });
+
+        res.on("end", function() {
+          fs.writeFile(savePath, imgData, "binary", function(err) {
+            if (err) {
+              console.log(`${url}--下载失败2`);
+              reject()
+            }
+            resolve()
+            console.log(`${url}--下载成功2`);
+          });
+        });
+      });
+    })
+    arr.push(promiseItem)
+  }
+  if (batch) { // 如果是并发
+    return Promise.all(arr)
+  } else {
+    for (let i = 0; i < arr.length; i++) {
+      await arr[i]
+    }
+  }
+}
+
 
 module.exports = {
   webUrlSplicing,
@@ -180,5 +243,6 @@ module.exports = {
   getServerPid,
   timeout,
   makeDir,
-  downloadFile
+  downloadFile,
+  downloadFile2
 };

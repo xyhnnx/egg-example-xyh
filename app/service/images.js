@@ -8,7 +8,7 @@ const fetch = require('../util/fetch');
 // 浏览器连接工具`
 const BrowserUtil = require('../util/browser');
 const { dateFormat } = require('../util/date-time-utils');
-const { downloadFile, makeDir } = require('../util/util');
+const { downloadFile, downloadFile2, makeDir, timeout } = require('../util/util');
 
 // const http = (uri) => {
 //   return new Promise((resolve, reject) => {
@@ -210,8 +210,9 @@ class ImagesService extends Service {
           stop = true
         }
       }
-      downloadFile(arr)
-      returnData = arr
+      // 下载文件到本地
+      await downloadFile(arr)
+      // returnData = arr
     } catch (err) {
       this.logger.error('getPageImages3发生错误');
     }
@@ -222,59 +223,64 @@ class ImagesService extends Service {
 
   // 下载bing图片
   async getPageImages4(data) {
-    console.log('data=', data);
-    let returnData;
-    // 浏览器
-    // 渲染URL
-    const url = `https://uploadbeta.com/api/pictures/random/?key=%E6%8E%A8%E5%A5%B3%E9%83%8E&t=${new Date().getTime()}`
-    // const url = `http://6d65-me-oacid-1300610701.tcb.qcloud.la/BING/20200801.jpg`
-    try {
-      // for (let i = 0; i < 10; i++) {
-      //
-      // }
-      console.log(this.app.appData.outputDir)
-      makeDir(this.app.appData.outputDir)
-      this.saveImg(url, `${this.app.appData.outputDir}/${new Date().getTime()}.jpg`)
-      returnData = []
-    } catch (err) {
-      this.logger.error('getPageImages4发生错误');
-    }
+    console.log('data4=', data);
+    let returnData = []
+    this.downImage2()
     return {
       data: returnData
     };
   }
 
+  async downImage1 () {
+    const url = `https://uploadbeta.com/api/pictures/random/?key=%E6%8E%A8%E5%A5%B3%E9%83%8E&t=${new Date().getTime()}`
+    try {
+      // for (let i = 0; i < 10; i++) {
+      //
+      // }
+
+      console.log('saveImg--------------')
+      const fs = require('fs');
+      const http = require('http');
+      const fetch = require('../util/fetch')
+      let res = await fetch({
+        url,
+        timeout: 0
+      })
+      console.log('res----', res)
+      if (res) {
+        makeDir(this.app.appData.outputDir)
+        let savePath = `${this.app.appData.outputDir}/${new Date().getTime()}.jpg`
+        const writer = fs.createWriteStream(savePath);
+        res.pipe(writer);
+        // fs.writeFile(savePath, res, 'binary', function (err) {
+        //   console.log('保存图片成功' + savePath)
+        // })
+      }
+
+      console.log(this.app.appData.outputDir)
+      makeDir(this.app.appData.outputDir)
+      this.saveImg(url, `${this.app.appData.outputDir}/${new Date().getTime()}.jpg`)
+    } catch (err) {
+      this.logger.error('downImage1');
+    }
+  }
+  async downImage2 () {
+    for (let i = 0; i < 5000; i++) {
+      let list = []
+      let name = Date.now()
+      list.push(
+        {
+          url: `https://uploadbeta.com/api/pictures/random/?key=%E6%8E%A8%E5%A5%B3%E9%83%8E&t=${name}`,
+          fileName: name,
+          fileType: 'png'
+        }
+      )
+      await downloadFile2(list, 'mm3', false)
+      await timeout(100)
+    }
+  }
   async saveImg(url, path) {
-    console.log('saveImg--------------')
-    const fs = require('fs');
-    const http = require('http');
-    const fetch = require('../util/fetch')
-    let res = await fetch({
-      url,
-      timeout: 0
-    })
-    console.log('res----', res)
-    // return new Promise(resolve => {
-    //   console.log('xxx')
-    //   http.get(url, function (req, res) {
-    //     let imgData = '';
-    //     req.setEncoding('binary');
-    //     req.on('data', function (chunk) {
-    //       console.log('on data')
-    //       imgData += chunk;
-    //     })
-    //     req.on('end', function () {
-    //       console.log('end')
-    //       fs.writeFile(path, imgData, 'binary', function (err) {
-    //         console.log('保存图片成功' + path)
-    //       })
-    //       resolve()
-    //     })
-    //     req.on('error', function () {
-    //       console.log('error---')
-    //     })
-    //   })
-    // })
+
   }
 }
 

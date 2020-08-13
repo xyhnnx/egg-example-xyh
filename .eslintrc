@@ -3,6 +3,7 @@
   "rules": {
     "semi": 0,
     "strict": "off",
+    "prefer-promise-reject-errors": "off",
     "quotes": "off",
     "prefer-const": "off",
     "no-unused-vars": "off",

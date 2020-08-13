@@ -3,16 +3,6 @@
     <head>
         <title>Hacker News</title>
     </head>
-    <body>
-        <ul class="news-view view">
-            {% for item in list %}
-            <li class="item">
-                {{ item.label}}
-                <img src="{{item.src}}"/>
-            </li>
-            {% endfor %}
-        </ul>
-    </body>
     <style>
         *{
             margin: 0;
@@ -22,11 +12,36 @@
             list-style: none;
         }
         .news-view {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            grid-gap: 0px;
+        }
+        .item{
+            position: relative;
         }
         img{
-            max-width: 100px;
+            width: 100%;
+            display: block;
+        }
+        .title{
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: right;
+            color: #fff;
+            z-index: 1;
         }
     </style>
+    <body>
+        <ul class="news-view view">
+            {% for item in list %}
+            <li class="item">
+                <img src="{{item.src}}"/>
+                <p class="title">{{ item.label}}</p>
+            </li>
+            {% endfor %}
+        </ul>
+    </body>
+
 </html>

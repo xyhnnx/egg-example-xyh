@@ -304,7 +304,8 @@ class ImagesService extends Service {
           if (e.target.voteup_count > 0) {
             answerList.push({
               questionId: e.target.question.id,
-              answerId: e.target.id
+              answerId: e.target.id,
+              answerUpNum: e.target.voteup_count
             })
           }
         })
@@ -328,7 +329,7 @@ class ImagesService extends Service {
     })
     return allQuesIds // Array.from(new Set(allQuesIds))
   }
-  // 获取一杯电影
+  // 获取知乎图片
   async getZhituAnswerItemImage(data) {
     let returnData;
     // 打开页面时间
@@ -346,63 +347,48 @@ class ImagesService extends Service {
       });
       // 载入并初始化cheerio
       returnData = html
-      // const $ = cheerio.load(html);
-      // let $box = $('.QuestionAnswer-content').eq(0);
-      // console.log(1)
-      // console.log('length', $box.length)
-      // let $info = $box.find('AnswerItem').eq(0);
-      // console.log('$info', $info.length)
-      // let dataZop = JSON.parse($info.attr('data-zop'));
-      // console.log(1)
+      const $ = cheerio.load(html);
+      let $box = $('.QuestionAnswer-content').eq(0);
+      let $info = $box.find('.AnswerItem').eq(0);
+      let dataZop = JSON.parse($info.attr('data-zop'));
       // let dataZaExtraModule = JSON.parse($info.attr('data-za-extra-module'));
-      // console.log(1)
-      // let answerId = dataZop.itemId;
-      // console.log(1)
-      // let questionName = dataZop.title;
-      // let authorName = dataZop.authorName;
-      // let questionId = dataZaExtraModule.card.content.parent_token;
-      // // 点赞数
-      // let answerUpNum = dataZaExtraModule.card.content.upvote_num;
-      // console.log(1)
-      // // NumberBoard-itemValue 问题关注数
-      // let questionFollowNum = $('.NumberBoard-itemValue').eq(0).attr('title');
-      // console.log(1)
-      // let questionReadNum = $('.NumberBoard-itemValue').eq(1).attr('title');
-      // console.log(1)
-      // let authorImg = $box.find('.AuthorInfo-avatar').eq(0).attr('src');
-      // console.log(1)
-      // let $domBadgeText = $box.find('.AuthorInfo-badgeText').eq(0);
-      // console.log(1)
-      // let authorBadgeText = $domBadgeText && $domBadgeText.text();
-      // console.log(1)
-      // let answerImgList = [];
-      // let imgDomlist = $box.find('.RichContent--unescapable').eq(0).find('img');
-      // console.log(1)
-      // let editTimeText = $box.find('.ContentItem-time').eq(0).find('span').eq(0).text();
-      // console.log(1)
-      //
-      // for (let i = 0; i < imgDomlist.length; i++) {
-      //   let imgDomItem = imgDomlist[i];
-      //   // 原始图片url
-      //   let originalUrl = imgDomItem.attr('data-original');
-      //   if (originalUrl) {
-      //     answerImgList.push(originalUrl);
-      //   }
-      // }
-      // let saveData = {
-      //   questionId,
-      //   questionName,
-      //   questionFollowNum, // 问题关注数
-      //   questionReadNum, // 问题浏览量
-      //   answerId,
-      //   answerUpNum, // 回答点赞数
-      //   answerImgList,
-      //   authorName,
-      //   authorImg,
-      //   authorBadgeText,
-      //   editTimeText
-      // };
-      // returnData = saveData;
+      let answerId = dataZop.itemId;
+      let questionName = dataZop.title;
+      let authorName = dataZop.authorName;
+      let questionId //  = dataZaExtraModule.card.content.parent_token;
+      // 点赞数
+      let answerUpNum //  = dataZaExtraModule.card.content.upvote_num;
+      // NumberBoard-itemValue 问题关注数
+      let questionFollowNum = $('.NumberBoard-itemValue').eq(0).attr('title');
+      let questionReadNum = $('.NumberBoard-itemValue').eq(1).attr('title');
+      let authorImg = $box.find('.AuthorInfo-avatar').eq(0).attr('src');
+      let $domBadgeText = $box.find('.AuthorInfo-badgeText').eq(0);
+      let authorBadgeText = $domBadgeText && $domBadgeText.text();
+      let answerImgList = [];
+      let imgDomlist = $box.find('.RichContent--unescapable').eq(0).find('img');
+      let editTimeText = $box.find('.ContentItem-time').eq(0).find('span').eq(0).text();
+      for (let i = 0; i < imgDomlist.length; i++) {
+        let imgDomItem = $(imgDomlist[i]);
+        // 原始图片url
+        let originalUrl = imgDomItem.attr('data-original');
+        if (originalUrl) {
+          answerImgList.push(originalUrl);
+        }
+      }
+      let saveData = {
+        questionId: data.questionId,
+        questionName,
+        questionFollowNum, // 问题关注数
+        questionReadNum, // 问题浏览量
+        answerId,
+        answerUpNum: data.answerUpNum, // 回答点赞数
+        answerImgList,
+        authorName,
+        authorImg,
+        authorBadgeText,
+        editTimeText
+      };
+      returnData = saveData;
     } catch (err) {
       this.logger.error(`page发生错误：${url}`);
       // 关闭页面
@@ -413,15 +399,20 @@ class ImagesService extends Service {
     console.log(`页面耗时: ${new Date() - startTime}ms，渲染页URL：${url}`);
     return returnData
   }
+
   // 获取知乎作答图片
   async getZhituAnswerImages(data) {
     let returnData;
     // 打开页面时间
     const startTime = new Date();
     try {
-      let questionAnswerIds = await this.getZhituQuestions(data.topicId, 5)
-      let res = await this.getZhituAnswerItemImage(questionAnswerIds[0])
-      returnData = res
+      let questionAnswerIds = await this.getZhituQuestions(data.topicId, 50)
+      let allRes = await Promise.all(
+        questionAnswerIds.map(e => {
+          return this.getZhituAnswerItemImage(e)
+        })
+      )
+      returnData = allRes
     } catch (err) {
       this.logger.error(`page发生错误`);
       throw err;

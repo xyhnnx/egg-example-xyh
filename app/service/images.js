@@ -105,7 +105,7 @@ class ImagesService extends Service {
       data: returnData
     };
   }
-
+  // 获取一杯电影
   async getPageImages2(data) {
     let returnData;
 
@@ -281,6 +281,69 @@ class ImagesService extends Service {
   }
   async saveImg(url, path) {
 
+  }
+  async getZhituQuestions (topicId, count = 35) {
+    // 渲染URL
+    const url = `https://www.zhihu.com/api/v4/topics/${topicId || '19602490'}/feeds/essence`;
+    const getData = async (offset, limit) => {
+      const res = await fetch({
+        url,
+        params: {
+          include: 'data[?(target.type=topic_sticky_module)].target.data[?(target.type=answer)].target.content,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp;data[?(target.type=topic_sticky_module)].target.data[?(target.type=answer)].target.is_normal,comment_count,voteup_count,content,relevant_info,excerpt.author.badge[?(type=best_answerer)].topics;data[?(target.type=topic_sticky_module)].target.data[?(target.type=article)].target.content,voteup_count,comment_count,voting,author.badge[?(type=best_answerer)].topics;data[?(target.type=topic_sticky_module)].target.data[?(target.type=people)].target.answer_count,articles_count,gender,follower_count,is_followed,is_following,badge[?(type=best_answerer)].topics;data[?(target.type=answer)].target.annotation_detail,content,hermes_label,is_labeled,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp,answer_type;data[?(target.type=answer)].target.author.badge[?(type=best_answerer)].topics;data[?(target.type=answer)].target.paid_info;data[?(target.type=article)].target.annotation_detail,content,hermes_label,is_labeled,author.badge[?(type=best_answerer)].topics;data[?(target.type=question)].target.annotation_detail,comment_count;',
+          offset,
+          limit // 这个最多10条
+        },
+        method: 'get',
+        timeout: 60000,
+      });
+      let answerList = []
+      if (res && res.data && res.data.length) {
+        res.data.forEach(e => {
+          // 点赞数大约 10000
+          if (e.target.voteup_count > 0) {
+            answerList.push({
+              questionId: e.target.question.id,
+              answerId: e.target.id
+            })
+          }
+        })
+      }
+      return answerList
+    }
+    let arr = []
+    let len = Math.ceil(count / 10)
+    for (let i = 0; i < len; i++) {
+      let offset = 10 * i
+      let limit = 10
+      if (i === len - 1 && count % 10 !== 0) {
+        limit = count % 10
+      }
+      arr.push(getData(offset, limit))
+    }
+    let allResArr = await Promise.all(arr)
+    let allQuesIds = []
+    allResArr.forEach(e => {
+      allQuesIds.push(...e)
+    })
+    return allQuesIds // Array.from(new Set(allQuesIds))
+  }
+  // 获取知乎作答图片
+  async getZhituAnswerImages(data) {
+    let returnData;
+
+    // 打开页面时间
+    const startTime = new Date();
+    try {
+      let questionAnswerIds = await this.getZhituQuestions(data.topicId, 50)
+      returnData = questionAnswerIds
+    } catch (err) {
+      this.logger.error(`page发生错误`);
+      throw err;
+    }
+    console.log(`页面耗时: ${new Date() - startTime}ms，渲染页URL`);
+    return {
+      data: returnData
+    };
   }
 }
 

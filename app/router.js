@@ -17,5 +17,6 @@ module.exports = app => {
   router.get('/page-images2', controller.images.getPageImages2);
   router.get('/page-images-bing', controller.images.getPageImages3);
   router.get('/page-images-4', controller.images.getPageImages4);
+  router.get('/page-images-zhitu', controller.images.getZhituAnswerImages);
   // router.post('createPost', '/api/posts', controller.post.create);
 };

@@ -171,13 +171,10 @@ class NewsController extends Controller {
       // 通过参数检查
       if (paramsCheck) {
         const result = await ctx.service.images.getZhituAnswerImages(data);
+        console.log(result)
         // 如果要渲染
         // await this.ctx.render('images/list.tpl', { list: result.data });
-        ctx.body = {
-          status: 0,
-          message: '获取成功',
-          data: result
-        };
+        ctx.body = result
       } else {
         ctx.body = {
           status: 1,

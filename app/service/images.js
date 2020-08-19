@@ -282,6 +282,7 @@ class ImagesService extends Service {
   async saveImg(url, path) {
 
   }
+  /* ----------------------获取知乎作答图片-start--------------- */
   // 获取话题下面的精选 count个问题和回答
   async getZhituQuestions (topicId, count = 35) {
     // 渲染URL
@@ -422,6 +423,148 @@ class ImagesService extends Service {
       data: returnData
     }
   }
+  /* ----------------------获取知乎作答图片end--------------- */
+  /* ----------------------获取豆瓣电影 start--------------- */
+  async getMovieList (data) {
+    let returnData;
+    // 打开页面时间
+    const startTime = new Date();
+    // 渲染URL
+    const url = `https://movie.douban.com/top250`;
+    try {
+      // 使用request.js库发送get请求
+      // const html = await http(url)
+      const html = await fetch({
+        url,
+        params: {
+          start: data.start
+        },
+        method: 'get',
+        timeout: 60000,
+      });
+      // 载入并初始化cheerio
+      const $ = cheerio.load(html);
+      let $list = $('.grid_view .item')
+      let saveData = []
+      for (let i = 0; i < $list.length; i++) {
+        let $item = $($list[i])
+        let url = $item.find('.info a').attr('href');
+        let index = Number($item.find('.pic em').text())
+        let coverImgSrc = $item.find('.pic img').attr('src')
+        let name = $item.find('.info a span').eq(0).text()
+        let totalName = $item.find('.info a').text()
+        let infoList = $item.find('.info .bd p').eq(0).text().split('\n')
+        let actorText = infoList[1]
+        let typeText = infoList[2]
+        let score = $item.find('.info .rating_num').text()
+        let commitCount = $item.find('.star span').last().text()
+        let oneWord = $item.find('.info .quote .inq').text()
+        saveData.push({
+          url,
+          movieId: url.split('/')[url.split('/').length - 2],
+          index,
+          coverImgSrc,
+          name,
+          totalName,
+          actorText,
+          typeText,
+          score,
+          commitCount,
+          oneWord,
+        })
+      }
+      returnData = saveData;
+    } catch (err) {
+      this.logger.error(`page发生错误：${url}`);
+      // 关闭页面
+      // 断开浏览器连接
+      // 抛出异常
+      throw err;
+    }
+    console.log(`页面耗时: ${new Date() - startTime}ms，渲染页URL：${url}`);
+    return returnData
+  }
+
+  async getMovieDetail (data) {
+    let returnData;
+    // 打开页面时间
+    const startTime = new Date();
+    // 渲染URL
+    const url = data.url
+    try {
+      // 使用request.js库发送get请求
+      // const html = await http(url)
+      const html = await fetch({
+        url,
+        params: {
+        },
+        method: 'get',
+        timeout: 60000,
+      });
+      // 载入并初始化cheerio
+      returnData = html
+      const $ = cheerio.load(html);
+      let $list = $('.grid_view .item')
+      let saveData = []
+      for (let i = 0; i < $list.length; i++) {
+        let $item = $($list[i])
+        let url = $item.find('.info a').attr('href');
+        let index = Number($item.find('.pic em').text())
+        let coverImgSrc = $item.find('.pic img').attr('src')
+        let name = $item.find('.info a span').eq(0).text()
+        let totalName = $item.find('.info a').text()
+        let infoList = $item.find('.info bd p').eq(0).html().split('<br>')
+        let actorText = infoList[0]
+        let typeText = infoList[1]
+        saveData.push({
+          url,
+          movieId: url.split('/')[url.split('/').length - 2],
+          index,
+        })
+      }
+      returnData = saveData;
+    } catch (err) {
+      this.logger.error(`page发生错误：${url}`);
+      // 关闭页面
+      // 断开浏览器连接
+      // 抛出异常
+      throw err;
+    }
+    console.log(`页面耗时: ${new Date() - startTime}ms，渲染页URL：${url}`);
+    return returnData
+  }
+  // 获取豆瓣电影
+  async getDoubanMovie(data) {
+    let returnData = []
+    // 打开页面时间
+    const startTime = new Date();
+    try {
+      let arr = []
+      for (let i = 0; i < 250; i += 25) {
+        arr.push(
+          this.getMovieList({
+            start: i
+          })
+        )
+      }
+      let res = await Promise.all(arr)
+      if (res && res.length) {
+        res.forEach(e => {
+          if (e.length) {
+            returnData.push(...e)
+          }
+        })
+      }
+    } catch (err) {
+      this.logger.error(`page发生错误`);
+      throw err;
+    }
+    console.log(`页面耗时: ${new Date() - startTime}ms，渲染页URL`);
+    return {
+      data: returnData
+    }
+  }
+  /* ----------------------获取豆瓣电影 end--------------- */
 }
 
 module.exports = ImagesService;

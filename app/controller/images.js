@@ -190,6 +190,20 @@ class NewsController extends Controller {
       };
     }
   }
+  // 豆瓣电影
+  async getDoubanMovie() {
+    const { ctx } = this;
+    const data = ctx.query;
+    try {
+      ctx.body = await ctx.service.images.getDoubanMovie(data);
+    } catch (e) {
+      ctx.body = {
+        status: 1,
+        message: '服务器内部错误',
+        data: e
+      };
+    }
+  }
 }
 
 module.exports = NewsController;

@@ -459,6 +459,10 @@ class ImagesService extends Service {
         let score = $item.find('.info .rating_num').text()
         let commitCount = $item.find('.star span').last().text()
         let oneWord = $item.find('.info .quote .inq').text()
+        let detailData = await this.getMovieDetail({
+          url
+        })
+        console.log(detailData)
         saveData.push({
           url,
           movieId: url.split('/')[url.split('/').length - 2],
@@ -471,6 +475,7 @@ class ImagesService extends Service {
           score,
           commitCount,
           oneWord,
+          ...detailData
         })
       }
       returnData = saveData;
@@ -491,6 +496,7 @@ class ImagesService extends Service {
     const startTime = new Date();
     // 渲染URL
     const url = data.url
+    console.log('data.url', url)
     try {
       // 使用request.js库发送get请求
       // const html = await http(url)
@@ -502,25 +508,9 @@ class ImagesService extends Service {
         timeout: 60000,
       });
       // 载入并初始化cheerio
-      returnData = html
       const $ = cheerio.load(html);
-      let $list = $('.grid_view .item')
-      let saveData = []
-      for (let i = 0; i < $list.length; i++) {
-        let $item = $($list[i])
-        let url = $item.find('.info a').attr('href');
-        let index = Number($item.find('.pic em').text())
-        let coverImgSrc = $item.find('.pic img').attr('src')
-        let name = $item.find('.info a span').eq(0).text()
-        let totalName = $item.find('.info a').text()
-        let infoList = $item.find('.info bd p').eq(0).html().split('<br>')
-        let actorText = infoList[0]
-        let typeText = infoList[1]
-        saveData.push({
-          url,
-          movieId: url.split('/')[url.split('/').length - 2],
-          index,
-        })
+      let saveData = {
+        desc: $('#link-report span[property]').text()
       }
       returnData = saveData;
     } catch (err) {
@@ -540,7 +530,7 @@ class ImagesService extends Service {
     const startTime = new Date();
     try {
       let arr = []
-      for (let i = 0; i < 250; i += 25) {
+      for (let i = 0; i < 1; i += 25) {
         arr.push(
           this.getMovieList({
             start: i

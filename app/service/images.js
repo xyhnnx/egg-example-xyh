@@ -3,6 +3,7 @@
 const Service = require('egg').Service;
 // const path = require('path');
 // const request = require('request');
+const fs = require('fs');
 const cheerio = require('cheerio');
 const fetch = require('../util/fetch');
 // 浏览器连接工具`
@@ -432,21 +433,26 @@ class ImagesService extends Service {
     // 渲染URL
     const url = `https://movie.douban.com/top250`;
     try {
-      // 使用request.js库发送get请求
-      // const html = await http(url)
-      const html = await fetch({
+      console.log('------1', data)
+      const fetchParams = {
         url,
         params: {
           start: data.start
         },
         method: 'get',
         timeout: 60000,
-      });
+      }
+      console.log('------2')
+      const html = await fetch(fetchParams);
+      console.log('------3')
+      console.log(html)
       // 载入并初始化cheerio
       const $ = cheerio.load(html);
       let $list = $('.grid_view .item')
+      console.log($list.length)
       let saveData = []
       for (let i = 0; i < $list.length; i++) {
+        console.log(`------------------第${i + 1}个------------`)
         let $item = $($list[i])
         let url = $item.find('.info a').attr('href');
         let index = Number($item.find('.pic em').text())
@@ -454,15 +460,17 @@ class ImagesService extends Service {
         let name = $item.find('.info a span').eq(0).text()
         let totalName = $item.find('.info a').text()
         let infoList = $item.find('.info .bd p').eq(0).text().split('\n')
-        let actorText = infoList[1]
-        let typeText = infoList[2]
+        let actorText = infoList[1].trim()
+        let typeText = infoList[2].trim()
         let score = $item.find('.info .rating_num').text()
         let commitCount = $item.find('.star span').last().text()
         let oneWord = $item.find('.info .quote .inq').text()
-        let detailData = await this.getMovieDetail({
+        let detailData = {}
+        detailData = await this.getMovieDetail({
           url
         })
-        console.log(detailData)
+        await timeout(1000 + i)
+
         saveData.push({
           url,
           movieId: url.split('/')[url.split('/').length - 2],
@@ -480,7 +488,7 @@ class ImagesService extends Service {
       }
       returnData = saveData;
     } catch (err) {
-      this.logger.error(`page发生错误：${url}`);
+      this.logger.error(`---page发生错误--：${url}`);
       // 关闭页面
       // 断开浏览器连接
       // 抛出异常
@@ -510,7 +518,7 @@ class ImagesService extends Service {
       // 载入并初始化cheerio
       const $ = cheerio.load(html);
       let saveData = {
-        desc: $('#link-report span[property]').text()
+        desc: $('#link-report span[property]').text().replace(/\s+/g, "")
       }
       returnData = saveData;
     } catch (err) {
@@ -525,6 +533,10 @@ class ImagesService extends Service {
   }
   // 获取豆瓣电影
   async getDoubanMovie(data) {
+    // if (this.json2md) {
+    //   this.json2md()
+    //   return
+    // }
     let returnData = []
     // 打开页面时间
     const startTime = new Date();
@@ -545,6 +557,14 @@ class ImagesService extends Service {
           }
         })
       }
+      makeDir(`${this.app.appData.outputDir}/top250`)
+      fs.writeFile(`${this.app.appData.outputDir}/top250/output.json`, JSON.stringify(returnData), function(err) {
+        if (err) {
+          console.log(err)
+        } else {
+          console.log('写入成功！！！')
+        }
+      });
     } catch (err) {
       this.logger.error(`page发生错误`);
       throw err;
@@ -553,6 +573,47 @@ class ImagesService extends Service {
     return {
       data: returnData
     }
+  }
+  json2md () {
+    fs.readFile(`${this.app.appData.outputDir}/top250/output.json`, "utf-8", (err, data) => {
+      let json = JSON.parse(data);
+      let arr = []
+      for (let i = 0; i < json.length; i++) {
+        let item = json[i]
+/*        let str = `<h5>${item.index}. ${item.name}</h5>
+        <table border="0">
+            <tr>
+                <td valign="top">
+                    <img style="display: block;width: 100%;" src="${item.coverImgSrc}" alt="">
+                </td>
+                <td valign="top">
+                    <p> ${item.actorText}</p>
+                    <p>${item.typeText}  </p>
+                    <p>${item.score}评分: ${item.commitCount}</p>
+                </td>
+            </tr>
+        </table>
+        <p>${item.desc}</p>
+        <hr>` */
+
+        let str = `## ${item.index}. ${item.name}
+![${item.name}](${item.coverImgSrc})  
+> ${item.actorText}  
+> ${item.typeText}  
+> ${item.score}评分 ${item.commitCount}  
+> ${item.desc}  
+---
+`
+        arr.push(str)
+      }
+      fs.writeFile(`${this.app.appData.outputDir}/top250/output.md`, arr.join(''), function(err) {
+        if (err) {
+          console.log(err)
+        } else {
+          console.log('md写入成功！！！')
+        }
+      });
+    })
   }
   /* ----------------------获取豆瓣电影 end--------------- */
 }

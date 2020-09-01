@@ -533,10 +533,15 @@ class ImagesService extends Service {
   }
   // 获取豆瓣电影
   async getDoubanMovie(data) {
-    // if (this.json2md) {
-    //   this.json2md()
-    //   return
-    // }
+    if (this.bingJson2Md) {
+      this.bingJson2Md()
+      return
+    }
+    // 先生成json文件；再把json转md
+    if (this.json2md) {
+      this.json2md()
+      return
+    }
     let returnData = []
     // 打开页面时间
     const startTime = new Date();
@@ -580,7 +585,7 @@ class ImagesService extends Service {
       let arr = []
       for (let i = 0; i < json.length; i++) {
         let item = json[i]
-/*        let str = `<h5>${item.index}. ${item.name}</h5>
+/*      let str = `<h5>${item.index}. ${item.name}</h5>
         <table border="0">
             <tr>
                 <td valign="top">
@@ -594,15 +599,17 @@ class ImagesService extends Service {
             </tr>
         </table>
         <p>${item.desc}</p>
-        <hr>` */
+        <hr>`
+******/
 
         let str = `## ${item.index}. ${item.name}
 ![${item.name}](${item.coverImgSrc})  
-> ${item.actorText}  
-> ${item.typeText}  
-> ${item.score}评分 ${item.commitCount}  
+${item.actorText}  
+${item.typeText}  
+${item.score}评分 ${item.commitCount}  
+\`${item.oneWord}\`
 > ${item.desc}  
----
+------
 `
         arr.push(str)
       }
@@ -616,6 +623,48 @@ class ImagesService extends Service {
     })
   }
   /* ----------------------获取豆瓣电影 end--------------- */
+
+  // bing壁纸
+  async bingWallpapers () {
+    const fetchParams = {
+      // 第几页 / 一页几条数据
+      url: 'https://blog.mrabit.com/bing/get_img_lists/1/2000',
+      params: {},
+      method: 'get',
+      timeout: 60000,
+    }
+    const res = await fetch(fetchParams);
+    makeDir(`${this.app.appData.outputDir}/bing`)
+    fs.writeFile(`${this.app.appData.outputDir}/bing/imageList.json`, JSON.stringify(res.result.img_list), function(err) {
+      if (err) {
+        console.log(err)
+      } else {
+        console.log('imageList.Json写入成功！！！')
+      }
+    });
+  }
+  bingJson2Md () {
+    fs.readFile(`${this.app.appData.outputDir}/bing/imageList.json`, "utf-8", (err, data) => {
+      let json = JSON.parse(data);
+      let arr = []
+      for (let i = 0; i < json.length; i++) {
+        if (i > 10) break;
+        let item = json[i]
+        let str = `![${item.img_time}](${item.img_url.replace('http', 'https')} "${item.img_time}")  
+\`${item.img_title}\`  
+`
+        arr.push(str)
+      }
+      fs.writeFile(`${this.app.appData.outputDir}/bing/output2.md`, arr.join(''), function(err) {
+        if (err) {
+          console.log(err)
+        } else {
+          console.log('bing / output.md写入成功！！！')
+        }
+      });
+    })
+  }
 }
+
 
 module.exports = ImagesService;

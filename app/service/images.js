@@ -193,21 +193,25 @@ class ImagesService extends Service {
     let returnData;
     // 浏览器
     // 渲染URL
-    const prefix = `https://6d65-me-oacid-1300610701.tcb.qcloud.la`;
+    // const prefix = `https://6d65-me-oacid-1300610701.tcb.qcloud.la`;
+    const prefix = `http://cdn.mrabit.com`;
+
     try {
       let stop = false;
       let nowTime = new Date().getTime();
       let arr = []
       while (!stop) {
-        let timeStr = dateFormat(nowTime, 'yyyyMMdd')
-        let url = `${prefix}/BING/${timeStr}.jpg`
+        let timeStr = dateFormat(nowTime, 'yyyy-MM-dd')
+        // let url = `${prefix}/BING/${timeStr}.jpg`
+        let url = `${prefix}/1920.${timeStr}.jpg`
         arr.push({
           src: url,
           label: timeStr,
-          url
+          url,
+          fileName: `${timeStr}`
         })
         nowTime = nowTime - (24 * 60 * 60 * 1000)
-        if (nowTime <= new Date('2019-01-01').getTime()) {
+        if (nowTime < new Date('2016-09-23').getTime()) {
           stop = true
         }
       }

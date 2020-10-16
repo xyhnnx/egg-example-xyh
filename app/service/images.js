@@ -1,7 +1,7 @@
 // app/service/news.js
 'use strict';
 const Service = require('egg').Service;
-// const path = require('path');
+const path = require('path');
 // const request = require('request');
 const fs = require('fs');
 const cheerio = require('cheerio');
@@ -27,7 +27,35 @@ const { downloadFile, downloadFile2, makeDir, timeout } = require('../util/util'
 // }
 
 class ImagesService extends Service {
-  async getPageImages(data) {
+  async test(data) {
+    console.log(data)
+    this.downloadDatabaseJsonImg()
+  }
+  async downloadDatabaseJsonImg () {
+    function getDatabaseArr () {
+      console.log()
+      let stringData = fs.readFileSync(path.join(__dirname, './database_export.json'), 'utf-8')
+      let databaseArr = []
+      stringData.split('\n').forEach(e => {
+        if (e) {
+          databaseArr.push(JSON.parse(e))
+        }
+      })
+      return databaseArr
+    }
+    let databaseArr = getDatabaseArr().map((e, i) => {
+      return {
+        url: e.src.replace('1920x1080', 'UHD'),
+        fileName: e.createTime.$date.substr(0, 10) + '-' + i,
+        fileType: 'jpg'
+      }
+    })
+    let savePath = `wallpapersHDDatabase`
+    // 下载文件到本地
+    await downloadFile(databaseArr, savePath)
+    console.log(databaseArr)
+  }
+  async getPageImages0(data) {
     console.log('data=', data);
     let returnData;
     // 浏览器

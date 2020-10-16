@@ -13,6 +13,9 @@ async function getSearchImg(params = {}) {
   })
 }
 class NewsController extends Controller {
+  async test() {
+    this.ctx.service.images.test(this.ctx.query)
+  }
   async list() {
     const ctx = this.ctx;
     // 示例：请求一个 npm 模块信息

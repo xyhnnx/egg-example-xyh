@@ -12,6 +12,7 @@ module.exports = app => {
   router.get('/news', controller.news.list);
   router.get('/new-detail', controller.news.detail);
   router.post('/new-detail', controller.news.editData);
+  router.get('/test', controller.images.test);
   router.get('/images', controller.images.list);
   router.get('/page-images', controller.images.getPageImages);
   router.get('/page-images2', controller.images.getPageImages2);

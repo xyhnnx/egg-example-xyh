@@ -26,10 +26,38 @@ const { downloadFile, downloadFile2, makeDir, timeout } = require('../util/util'
 //   })
 // }
 
+
 class ImagesService extends Service {
   async test(data) {
     console.log(data)
-    this.downloadDatabaseJsonImg()
+    // this.downloadDatabaseJsonImg()
+    this.json2html2pdf()
+  }
+  async json2html2pdf () {
+    let {subject} = require('./subject')
+    let {writeFile, html2Pdf} = require('./common')
+    let articleArr = Object.values(subject)
+    let dir1 = `${this.app.appData.outputDir}/article/html`
+    let dir2 = `${this.app.appData.outputDir}/article/pdf`
+    makeDir(dir1)
+    makeDir(dir2)
+    for (let i = 0; i < articleArr.length; i++) {
+      let htmlSaveUrl = `${dir1}/${i + 1}.html`
+      let flag = await writeFile(htmlSaveUrl, articleArr[i])
+      if (flag) {
+        console.log(`${i + 1}.html写入成功！`)
+        try {
+          await html2Pdf(__dirname.substr(0, 2) + htmlSaveUrl, `${dir2}`, `${i + 1}`)
+          console.log(`${i + 1}.pdf写入成功！`)
+        } catch (e) {
+          console.log(`${i + 1}.pdf写入失败！--${e}`)
+          break
+        }
+      } else {
+        console.log(`${i + 1}.html写入失败！`)
+        break
+      }
+    }
   }
   async downloadDatabaseJsonImg () {
     function getDatabaseArr () {

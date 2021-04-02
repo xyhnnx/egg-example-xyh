@@ -26,12 +26,12 @@ const { downloadFile, downloadFile2, makeDir, timeout } = require('../util/util'
 //   })
 // }
 
-
+const Zhihu = require('../methods/zhihu.js')
 class ImagesService extends Service {
   async test(data) {
-    console.log(data)
     // this.downloadDatabaseJsonImg()
-    this.json2html2pdf()
+    // this.json2html2pdf()
+    new Zhihu().index()
   }
   async json2html2pdf () {
     let {subject} = require('./subject')

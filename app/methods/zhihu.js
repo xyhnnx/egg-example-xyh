@@ -107,7 +107,7 @@ class Zhihu {
                             res = await this.getEssence(url, id)
                             break
                         } catch (e) {
-                            console.log(`getEssence第${tryCount + 1}次尝试`)
+                            console.log(`getEssence第${tryCount + 1}次尝试-${url}---${e}`)
                             if (tryCount === 2) {
                                 err.push({id: id})
                                 let data = essenceData
@@ -144,17 +144,29 @@ class Zhihu {
             method: 'get',
             timeout: 60000
         })
-
         if (res && res.data && res.data.length) {
             let data = res.data.map(e => {
-                return {
-                    questionTitle: e.target.question.title,
-                    questionId: e.target.question.id,
-                    answerId: e.target.id,
-                    voteupCount: e.target.voteup_count,
-                    commentCount: e.target.comment_count,
-                    updatedTime: e.target.updated_time
+                if(e.target.type === 'article') { // 文章
+                    return {
+                        type: 'article',
+                        title: e.target.title
+                        answerId: e.target.id,
+                        url: e.target.url,
+                        voteupCount: e.target.voteup_count,
+                        commentCount: e.target.comment_count,
+                        updatedTime: e.target.updated
+                    }
+                } else {
+                    return {
+                        questionTitle: e.target.question.title,
+                        questionId: e.target.question.id,
+                        answerId: e.target.id,
+                        voteupCount: e.target.voteup_count,
+                        commentCount: e.target.comment_count,
+                        updatedTime: e.target.updated_time
+                    }
                 }
+
             })
             return {
                 data,

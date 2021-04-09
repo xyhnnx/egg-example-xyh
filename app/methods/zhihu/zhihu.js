@@ -1,8 +1,8 @@
 'use strict'
-const fetch = require('../util/fetch')
+const fetch = require('../../util/fetch')
 const fs = require('fs')
 const Controller = require('egg').Controller
-const { downloadFile, downloadFile2, makeDir, timeout } = require('../util/util');
+const { downloadFile, downloadFile2, makeDir, timeout } = require('../../util/util');
 
 class Zhihu {
     outputDir = '/egg-example-xyh-output' + '/zhihu-output'
@@ -209,6 +209,9 @@ class Zhihu {
         }
     }
 }
+
+let z = new Zhihu()
+z.index()
 
 class ScriptClass {
     async index() {

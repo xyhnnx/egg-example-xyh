@@ -1,0 +1,17 @@
+{
+  "name": "zhihu",
+  "version": "1.0.0",
+  "description": "",
+  "bin": "./zhihu.js",
+  "scripts": {
+    "pkg": "pkg . --out-path=dist/"
+  },
+  "pkg": {
+    "scripts": "/egg-example-xyh-output/zhihu-output/*",
+    "assets": "/egg-example-xyh-output/zhihu-output/*",
+    "targets": [ "win" ]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

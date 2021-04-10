@@ -7,8 +7,8 @@
     "pkg": "pkg . --out-path=dist/"
   },
   "pkg": {
-    "scripts": "d:/egg-example-xyh-output/zhihu-output/*",
-    "assets": "d:/egg-example-xyh-output/zhihu-output/*",
+    "scripts": "/egg-example-xyh-output/zhihu-output/*",
+    "assets": "/egg-example-xyh-output/zhihu-output/*",
     "targets": [ "win" ]
   },
   "keywords": [],

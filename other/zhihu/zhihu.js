@@ -1,11 +1,11 @@
 'use strict'
-const fetch = require('../../util/fetch')
+const fetch = require('../../app/util/fetch')
 const fs = require('fs')
 const Controller = require('egg').Controller
-const { downloadFile, downloadFile2, makeDir, timeout } = require('../../util/util');
+const { downloadFile, downloadFile2, makeDir, timeout } = require('../../app/util/util');
 
 class Zhihu {
-    outputDir = 'd:/egg-example-xyh-output' + '/zhihu-output'
+    outputDir = '/egg-example-xyh-output' + '/zhihu-output'
 
     async index () {
         let topicsData = await this.getTopicsData()
@@ -13,6 +13,7 @@ class Zhihu {
     }
 
     async getEssenceData (topicsData) {
+        topicsData = topicsData.slice(topicsData.length - 2000)
         let outputDir = this.outputDir
         makeDir(outputDir)
         makeDir(outputDir + '/essenceAnswer')

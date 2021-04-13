@@ -7,12 +7,14 @@
     "declarations": true
   },
   "dependencies": {
+    "archiver": "^5.3.0",
     "axios": "^0.19.2",
     "cheerio": "^1.0.0-rc.3",
     "egg": "^2.15.1",
     "egg-scripts": "^2.11.0",
     "egg-view-nunjucks": "^2.2.0",
     "ioredis": "^4.16.1",
+    "mysql": "^2.18.1",
     "promise-queue-plus": "^1.2.2",
     "puppeteer": "^5.2.1",
     "request": "^2.88.2"

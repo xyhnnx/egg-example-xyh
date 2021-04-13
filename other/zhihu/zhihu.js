@@ -1,19 +1,22 @@
 'use strict'
 const fetch = require('../../app/util/fetch')
 const fs = require('fs')
+const path = require('path')
 const Controller = require('egg').Controller
-const { downloadFile, downloadFile2, makeDir, timeout } = require('../../app/util/util');
-
+const {downloadFile, downloadFile2, makeDir, timeout} = require('../../app/util/util')
+const {dateFormat} = require('../../app/util/date-time-utils')
+const {geFileList} = require('../../app/util/zip-file')
+const MysqlUtil = require('../../app/util/mysql')
 class Zhihu {
     outputDir = '/egg-example-xyh-output' + '/zhihu-output'
 
-    async index () {
+    async index1 () {
         let topicsData = await this.getTopicsData()
         this.getEssenceData(topicsData)
     }
 
     async getEssenceData (topicsData) {
-        topicsData = topicsData.slice(topicsData.length - 2000)
+        // topicsData = topicsData.slice(topicsData.length - 2000)
         let outputDir = this.outputDir
         makeDir(outputDir)
         makeDir(outputDir + '/essenceAnswer')
@@ -209,42 +212,22 @@ class Zhihu {
             return false
         }
     }
-}
 
-let z = new Zhihu()
-z.index()
-
-class ScriptClass {
-    async index() {
+    async index2 () {
         console.log(process.execPath)
         console.log(process.cwd())
-        await new Promise((resolve)=>{
-            console.log('xxxxxfsafasfd')
-            setTimeout(() => {
-                console.log('xxxxx')
-                resolve()
-            }, 2000)
-        })
         try {
             let jsonList = this.getList()
             this.json2md(jsonList)
         } catch (e) {
             console.log(e)
         }
-        await new Promise((resolve)=>{
-            console.log('xxxxxfsafasfd')
-            setTimeout(() => {
-                console.log('xxxxx')
-                resolve()
-            }, 10000)
-        })
-
     }
     getList() {
-        let list = geFileList(path.join(__dirname, '/essenceAnswer'))
+        let list = geFileList(path.join(this.outputDir, '/essenceAnswer'))
         let allList = []
         for(let i = 0;i<list.length;i++) {
-            console.log(`read index = ${i}`)
+            console.log(`------ ${i}/${list.length}-------`)
             let data = JSON.parse(fs.readFileSync(list[i].path))
             allList.push(...data)
         }
@@ -270,9 +253,8 @@ class ScriptClass {
             }
         })
         newList.sort((a,b)=> b.voteupCount - a.voteupCount)
-        console.log(newList.map(e => e.voteupCount))
-        return newList.slice(0,20)
-        // fs.writeFileSync('./output.json', JSON.stringify(allList))
+        fs.writeFileSync(path.join(this.outputDir, '/essenceAnswerList.json'), JSON.stringify(newList))
+        return newList
     }
     json2md (json) {
         let arr = []
@@ -287,12 +269,124 @@ class ScriptClass {
 `
             arr.push(str)
         }
-        fs.writeFileSync(path.join(process.cwd(),'/output.md'), arr.join(''))
+        fs.writeFileSync(path.join(this.outputDir,'/essenceAnswerList.md'), arr.join(''))
         console.log('.md file read over')
     }
+
+    async createTableTopics () {
+        try{
+            // 创建表
+            let mysqlInstance = new MysqlUtil('xyh_test')
+            let res = await mysqlInstance.query(`
+                CREATE TABLE t_topics(id int AUTO_INCREMENT,url VARCHAR(255),PRIMARY KEY(id))
+              `)
+            console.log(res)
+        } catch (e) {
+        }
+    }
+    async topicsJson2sql () {
+        let data = await this.getTopicsData()
+        console.log(data.length)
+        let mysql = new MysqlUtil('xyh_test')
+        let instance = mysql.instance
+        instance.connect()
+        for(let i = 0;i<data.length;i++) {
+            var  addSql = 'INSERT INTO t_topics(id,url) VALUES(0,?)';
+            var  addSqlParams = [data[i]];
+            await new Promise((resolve => {
+               instance.query(addSql, addSqlParams,(err, res) =>{
+                   resolve()
+               })
+            }))
+            console.log(`${i}/${data.length}`)
+        }
+        instance.end()
+    }
+    async createTableEssenceAnswer () {
+        try{
+            // 创建表
+            let mysqlInstance = new MysqlUtil('xyh_test')
+            let res = await mysqlInstance.query(`
+                CREATE TABLE t_topics(
+                id int AUTO_INCREMENT,
+                url VARCHAR(255),
+                PRIMARY KEY(id)
+                )
+              `)
+            console.log(res)
+        } catch (e) {
+        }
+    }
+    async essenceAnswer2sql () {
+        let mysql = new MysqlUtil('xyh_test')
+        let instance = mysql.instance
+        instance.connect()
+
+        let list = geFileList(path.join(this.outputDir, '/essenceAnswer'))
+        for(let i = 0;i<list.length;i++) {
+            let data = JSON.parse(fs.readFileSync(list[i].path))
+            for(let i2 = 0;i2<data.length;i2++) {
+                let e = data[i2]
+                let item
+                if(e.target.type === 'article') { // 文章
+                    item =  {
+                        type: e.target.type,
+                        title: e.target.title,
+                        url: e.target.url,
+                        voteup_count: e.target.voteup_count,
+                        comment_count: e.target.comment_count,
+                        updated_time: e.target.updated,
+                        created_time: e.target.created,
+                        author_name: e.target.author.name,
+                        author_img: e.target.author.avatar_url_template,
+                        excerpt: e.target.excerpt,
+                        content: e.target.content,
+                        answer_id: e.target.id,
+                        headline: e.target.author.headline
+                    }
+                } else {
+                    item = {
+                        type: e.target.type,
+                        title: e.target.question.title,
+                        url: `https://www.zhihu.com/question/${e.target.question.id}/answer/${e.target.id}`,
+                        voteup_count: e.target.voteup_count,
+                        comment_count: e.target.comment_count,
+                        updated_time: e.target.updated_time,
+                        created_time: e.target.created_time,
+                        author_name: e.target.author.name,
+                        author_img: e.target.author.avatar_url_template,
+                        excerpt: e.target.excerpt,
+                        content: e.target.content,
+                        answer_id: e.target.id,
+                        question_id: e.target.question.id,
+                        headline: e.target.author.headline
+                    }
+                }
+                item.updated_time = dateFormat(new Date(item.updated_time * 1000).getTime(),'yyyy-MM-dd hh:mm:ss')
+                item.created_time = dateFormat(new Date(item.created_time * 1000).getTime(), 'yyyy-MM-dd hh:mm:ss')
+                item.title = String(item.title)
+                let {type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline} = item
+                var  addSql = 'INSERT INTO t_answer(type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline,id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,0)';
+                var  addSqlParams = [type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline];
+                await new Promise((resolve => {
+                    instance.query(addSql, addSqlParams,(err, res) =>{
+                        if(err) {
+                            let  addSql = 'INSERT INTO t_answer_err(id,i1,i2) VALUES(0,?,?)';
+                            let  addSqlParams = [i,i2];
+                            instance.query(addSql, addSqlParams,(err, res) =>{
+                            })
+                        }
+                        resolve()
+                    })
+                }))
+                console.log(`内：${i2}/${data.length} ---------- 外：${i}/${list.length}`)
+            }
+        }
+        instance.end()
+    }
+
 }
 
-let s = new ScriptClass()
-// s.index()
-
+let z = new Zhihu()
+z.essenceAnswer2sql()
 module.exports = Zhihu

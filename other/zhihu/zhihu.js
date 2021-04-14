@@ -256,12 +256,12 @@ class Zhihu {
         fs.writeFileSync(path.join(this.outputDir, '/essenceAnswerList.json'), JSON.stringify(newList))
         return newList
     }
-    json2md (json) {
+    json2md (json, fileName) {
         let arr = []
         for (let i = 0; i < json.length; i++) {
             let item = json[i]
             let str = `${i + 1}  [${item.title}](${item.url})  
-获赞数： ${String(item.voteupCount).padEnd(10,' ')}   作者： ${item.authorName}  
+赞同数： ${((item.voteupCount/10000).toFixed(1) *1 + '万').padEnd(10,' ')}   作者： ${item.authorName}  
     
     
       
@@ -269,7 +269,7 @@ class Zhihu {
 `
             arr.push(str)
         }
-        fs.writeFileSync(path.join(this.outputDir,'/essenceAnswerList.md'), arr.join(''))
+        fs.writeFileSync(path.join(this.outputDir,`/${fileName}.md`), arr.join(''))
         console.log('.md file read over')
     }
 
@@ -317,6 +317,45 @@ class Zhihu {
         } catch (e) {
         }
     }
+
+    combineAnswer (e) {
+        let item
+        if(e.target.type === 'article') { // 文章
+            item =  {
+                type: e.target.type,
+                title: e.target.title,
+                url: e.target.url,
+                voteup_count: e.target.voteup_count,
+                comment_count: e.target.comment_count,
+                updated_time: e.target.updated,
+                created_time: e.target.created,
+                author_name: e.target.author.name,
+                author_img: e.target.author.avatar_url_template,
+                excerpt: e.target.excerpt,
+                content: e.target.content,
+                answer_id: e.target.id,
+                headline: e.target.author.headline
+            }
+        } else {
+            item = {
+                type: e.target.type,
+                title: e.target.question.title,
+                url: `https://www.zhihu.com/question/${e.target.question.id}/answer/${e.target.id}`,
+                voteup_count: e.target.voteup_count,
+                comment_count: e.target.comment_count,
+                updated_time: e.target.updated_time,
+                created_time: e.target.created_time,
+                author_name: e.target.author.name,
+                author_img: e.target.author.avatar_url_template,
+                excerpt: e.target.excerpt,
+                content: e.target.content,
+                answer_id: e.target.id,
+                question_id: e.target.question.id,
+                headline: e.target.author.headline
+            }
+        }
+        return item
+    }
     async essenceAnswer2sql () {
         let mysql = new MysqlUtil('xyh_test')
         let instance = mysql.instance
@@ -324,69 +363,61 @@ class Zhihu {
 
         let list = geFileList(path.join(this.outputDir, '/essenceAnswer'))
         for(let i = 0;i<list.length;i++) {
+            let time1 = Date.now()
             let data = JSON.parse(fs.readFileSync(list[i].path))
+            let requestArr = []
             for(let i2 = 0;i2<data.length;i2++) {
                 let e = data[i2]
-                let item
-                if(e.target.type === 'article') { // 文章
-                    item =  {
-                        type: e.target.type,
-                        title: e.target.title,
-                        url: e.target.url,
-                        voteup_count: e.target.voteup_count,
-                        comment_count: e.target.comment_count,
-                        updated_time: e.target.updated,
-                        created_time: e.target.created,
-                        author_name: e.target.author.name,
-                        author_img: e.target.author.avatar_url_template,
-                        excerpt: e.target.excerpt,
-                        content: e.target.content,
-                        answer_id: e.target.id,
-                        headline: e.target.author.headline
-                    }
-                } else {
-                    item = {
-                        type: e.target.type,
-                        title: e.target.question.title,
-                        url: `https://www.zhihu.com/question/${e.target.question.id}/answer/${e.target.id}`,
-                        voteup_count: e.target.voteup_count,
-                        comment_count: e.target.comment_count,
-                        updated_time: e.target.updated_time,
-                        created_time: e.target.created_time,
-                        author_name: e.target.author.name,
-                        author_img: e.target.author.avatar_url_template,
-                        excerpt: e.target.excerpt,
-                        content: e.target.content,
-                        answer_id: e.target.id,
-                        question_id: e.target.question.id,
-                        headline: e.target.author.headline
-                    }
+                let item = this.combineAnswer(e)
+                let requestItem = async (item) => {
+                    item.updated_time = dateFormat(new Date(item.updated_time * 1000).getTime(),'yyyy-MM-dd hh:mm:ss')
+                    item.created_time = dateFormat(new Date(item.created_time * 1000).getTime(), 'yyyy-MM-dd hh:mm:ss')
+                    item.title = String(item.title)
+                    let {type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline} = item
+                    var  addSql = 'INSERT INTO t_answer_100000(type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline,id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,0)';
+                    var  addSqlParams = [type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline];
+                    await new Promise((resolve => {
+                        instance.query(addSql, addSqlParams,(err, res) =>{
+                            if(err) {
+                                console.log(err)
+                                let  addSql = 'INSERT INTO t_answer_err(id,i1,i2) VALUES(0,?,?)';
+                                let  addSqlParams = [i,i2];
+                                instance.query(addSql, addSqlParams,(err, res) =>{
+                                })
+                            }
+                            resolve()
+                        })
+                    }))
                 }
-                item.updated_time = dateFormat(new Date(item.updated_time * 1000).getTime(),'yyyy-MM-dd hh:mm:ss')
-                item.created_time = dateFormat(new Date(item.created_time * 1000).getTime(), 'yyyy-MM-dd hh:mm:ss')
-                item.title = String(item.title)
-                let {type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline} = item
-                var  addSql = 'INSERT INTO t_answer(type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline,id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,0)';
-                var  addSqlParams = [type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline];
-                await new Promise((resolve => {
-                    instance.query(addSql, addSqlParams,(err, res) =>{
-                        if(err) {
-                            let  addSql = 'INSERT INTO t_answer_err(id,i1,i2) VALUES(0,?,?)';
-                            let  addSqlParams = [i,i2];
-                            instance.query(addSql, addSqlParams,(err, res) =>{
-                            })
-                        }
-                        resolve()
+                // > 100000
+                if(item.voteup_count >= 100000) {
+                    requestArr.push(()=> {
+                        return requestItem(item)
                     })
-                }))
-                console.log(`内：${i2}/${data.length} ---------- 外：${i}/${list.length}`)
+                }
+                // console.log(`内：${i2}/${data.length} ---------- 外：${i}/${list.length}`)
             }
+            console.log(`${requestArr.length}条数据  ${i}/${list.length}`)
+            await Promise.all(requestArr.map(e => e()))
+            console.log(`${requestArr.length}条数据  耗时${(Date.now()-time1) / 1000}s-------- ${i}/${list.length}`)
         }
         instance.end()
+    }
+
+    async sqlEssenceAnswer2md () {
+        // 创建表
+        let mysqlInstance = new MysqlUtil('xyh_test')
+        let res = await mysqlInstance.query(`
+                SELECT 
+                title,url,voteup_count as voteupCount,author_name as authorName 
+                from t_answer_100000 group by answer_id ORDER BY voteup_count DESC 
+              `)
+         console.log(res)
+        this.json2md(res, 'answer_100000')
     }
 
 }
 
 let z = new Zhihu()
-z.essenceAnswer2sql()
+z.sqlEssenceAnswer2md()
 module.exports = Zhihu

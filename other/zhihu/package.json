@@ -1,10 +1,10 @@
 {
-  "name": "zhihu",
+  "name": "zhihu-toSql1000",
   "version": "1.0.0",
   "description": "",
   "bin": "./zhihu.js",
   "scripts": {
-    "pkg": "pkg . --out-path=dist/"
+    "pkg": "pkg . --out-path=/egg-example-xyh-output/zhihu-output/dist/"
   },
   "pkg": {
     "scripts": "/egg-example-xyh-output/zhihu-output/*",
@@ -15,5 +15,8 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "xlsx-style": "^0.8.13"
+  }
 }

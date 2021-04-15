@@ -16,7 +16,6 @@ class Zhihu {
     }
 
     async getEssenceData (topicsData) {
-        // topicsData = topicsData.slice(topicsData.length - 2000)
         let outputDir = this.outputDir
         makeDir(outputDir)
         makeDir(outputDir + '/essenceAnswer')
@@ -104,29 +103,6 @@ class Zhihu {
                 return {
                     ...e
                 }
-                // if(e.target.type === 'article') { // 文章
-                //     return {
-                //         type: 'article',
-                //         title: e.target.title,
-                //         answerId: e.target.id,
-                //         url: e.target.url,
-                //         voteupCount: e.target.voteup_count,
-                //         commentCount: e.target.comment_count,
-                //         updatedTime: e.target.updated,
-                //         authorName: e.target.author.name
-                //     }
-                // } else {
-                //     return {
-                //         questionTitle: e.target.question.title,
-                //         questionId: e.target.question.id,
-                //         answerId: e.target.id,
-                //         voteupCount: e.target.voteup_count,
-                //         commentCount: e.target.comment_count,
-                //         updatedTime: e.target.updated_time,
-                //         authorName: e.target.author.name
-                //     }
-                // }
-
             })
             return {
                 data,
@@ -302,17 +278,33 @@ class Zhihu {
         }
         instance.end()
     }
-    async createTableEssenceAnswer () {
+    async createTableEssenceAnswer (tableName = 't_answer_10000') {
         try{
             // 创建表
             let mysqlInstance = new MysqlUtil('xyh_test')
-            let res = await mysqlInstance.query(`
-                CREATE TABLE t_topics(
-                id int AUTO_INCREMENT,
-                url VARCHAR(255),
-                PRIMARY KEY(id)
-                )
+            let res
+            try{
+                res = await mysqlInstance.query(`
+                CREATE TABLE ${tableName}(
+                     answer_id BIGINT PRIMARY KEY,
+                     content MEDIUMTEXT,
+                     url text,
+                     type text,
+                     title text,
+                     voteup_count BIGINT,
+                     comment_count BIGINT,
+                     updated_time DATETIME,
+                     created_time DATETIME,
+                     author_name text,
+                     author_img text,
+                     excerpt TEXT,
+                     question_id BIGINT,
+                     headline LONGTEXT
+                    )
               `)
+            }catch (e) {
+                console.log(e)
+            }
             console.log(res)
         } catch (e) {
         }
@@ -356,14 +348,41 @@ class Zhihu {
         }
         return item
     }
+
     async essenceAnswer2sql () {
+
         let mysql = new MysqlUtil('xyh_test')
+        let gtCount = 1000
+        let sqlTableName = `t_answer_${gtCount}`
         let instance = mysql.instance
         instance.connect()
 
         let list = geFileList(path.join(this.outputDir, '/essenceAnswer'))
+        let listIndex = await new Promise((resolve => {
+            instance.query(`select idx from t_answer_progress_index WHERE table_name = '${sqlTableName}'`,(err, res) =>{
+                if(err) {
+                    console.log(err)
+                }
+                resolve(res[0].idx || 0)
+            })
+        }))
         for(let i = 0;i<list.length;i++) {
+            if(i < listIndex) {
+                continue
+            }
             let time1 = Date.now()
+            // 记录进度
+            let  addSql = `replace INTO t_answer_progress_index(table_name, idx) VALUES(?,?)`;
+            let  addSqlParams = [sqlTableName, i];
+            await new Promise((resolve => {
+                instance.query(addSql, addSqlParams,(err, res) =>{
+                    if(err) {
+                        console.log(err)
+                    }
+                    resolve()
+                })
+            }))
+
             let data = JSON.parse(fs.readFileSync(list[i].path))
             let requestArr = []
             for(let i2 = 0;i2<data.length;i2++) {
@@ -374,8 +393,8 @@ class Zhihu {
                     item.created_time = dateFormat(new Date(item.created_time * 1000).getTime(), 'yyyy-MM-dd hh:mm:ss')
                     item.title = String(item.title)
                     let {type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline} = item
-                    var  addSql = 'INSERT INTO t_answer_100000(type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline,id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,0)';
-                    var  addSqlParams = [type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline];
+                    let  addSql = `replace INTO ${sqlTableName}(type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+                    let  addSqlParams = [type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline];
                     await new Promise((resolve => {
                         instance.query(addSql, addSqlParams,(err, res) =>{
                             if(err) {
@@ -390,7 +409,7 @@ class Zhihu {
                     }))
                 }
                 // > 100000
-                if(item.voteup_count >= 100000) {
+                if(item.voteup_count >= gtCount) {
                     requestArr.push(()=> {
                         return requestItem(item)
                     })
@@ -405,19 +424,40 @@ class Zhihu {
     }
 
     async sqlEssenceAnswer2md () {
-        // 创建表
         let mysqlInstance = new MysqlUtil('xyh_test')
         let res = await mysqlInstance.query(`
                 SELECT 
                 title,url,voteup_count as voteupCount,author_name as authorName 
-                from t_answer_100000 group by answer_id ORDER BY voteup_count DESC 
+                from t_answer_50000 group by answer_id ORDER BY voteup_count DESC 
               `)
-         console.log(res)
-        this.json2md(res, 'answer_100000')
+        this.json2md(res, 'answer_50000')
     }
 
-}
+    async sqlEssenceAnswerXlsx () {
+        const tableName = 't_answer_100000'
+        let mysqlInstance = new MysqlUtil('xyh_test')
+        let res = await mysqlInstance.query(`
+                SELECT 
+                title,url,voteup_count as voteupCount,author_name as authorName 
+                from ${tableName} group by answer_id ORDER BY voteup_count DESC 
+              `)
+        this.json2xlsx(res, tableName)
+    }
 
+    json2xlsx (json, fileName='test') {
+        const xlsx = require('../../app/util/xlsx')
+        const data = [['标题','作者','赞同数','链接']]
+        json.forEach(e => {
+            data.push([e.title,e.authorName,e.voteupCount,e.url])
+        })
+        var buffer = xlsx.build([ {name: fileName, data} ]) // Returns a buffer
+        fs.writeFileSync(path.join(this.outputDir, `/${fileName}1.xlsx`), buffer)
+        console.log('.xlsx file read over')
+    }
+
+
+}
+// total 553879 462155
 let z = new Zhihu()
-z.sqlEssenceAnswer2md()
+z.essenceAnswer2sql()
 module.exports = Zhihu

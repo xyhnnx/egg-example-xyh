@@ -350,22 +350,15 @@ class Zhihu {
     }
 
     async essenceAnswer2sql () {
-
-        let mysql = new MysqlUtil('xyh_test')
         let gtCount = 1000
         let sqlTableName = `t_answer_${gtCount}`
-        let instance = mysql.instance
-        instance.connect()
-
+        console.log('读取文件--start')
         let list = geFileList(path.join(this.outputDir, '/essenceAnswer'))
-        let listIndex = await new Promise((resolve => {
-            instance.query(`select idx from t_answer_progress_index WHERE table_name = '${sqlTableName}'`,(err, res) =>{
-                if(err) {
-                    console.log(err)
-                }
-                resolve(res[0].idx || 0)
-            })
-        }))
+        console.log('读取文件--end')
+        let mysql = new MysqlUtil('xyh_test')
+        let listIndexRes = await mysql.query(`select idx from t_answer_progress_index WHERE table_name = '${sqlTableName}'`)
+        let listIndex = listIndexRes[0].idx || 0
+        console.log(`查询到进度---${listIndex}/${list.length}`)
         for(let i = 0;i<list.length;i++) {
             if(i < listIndex) {
                 continue
@@ -374,53 +367,49 @@ class Zhihu {
             // 记录进度
             let  addSql = `replace INTO t_answer_progress_index(table_name, idx) VALUES(?,?)`;
             let  addSqlParams = [sqlTableName, i];
-            await new Promise((resolve => {
-                instance.query(addSql, addSqlParams,(err, res) =>{
-                    if(err) {
-                        console.log(err)
-                    }
-                    resolve()
-                })
-            }))
+            mysql = new MysqlUtil('xyh_test')
+            let pRes = await mysql.query(addSql, addSqlParams)
 
             let data = JSON.parse(fs.readFileSync(list[i].path))
-            let requestArr = []
+            let valueArr = []
             for(let i2 = 0;i2<data.length;i2++) {
                 let e = data[i2]
                 let item = this.combineAnswer(e)
-                let requestItem = async (item) => {
+                // > 100000
+                if(item.voteup_count >= gtCount) {
                     item.updated_time = dateFormat(new Date(item.updated_time * 1000).getTime(),'yyyy-MM-dd hh:mm:ss')
                     item.created_time = dateFormat(new Date(item.created_time * 1000).getTime(), 'yyyy-MM-dd hh:mm:ss')
                     item.title = String(item.title)
                     let {type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline} = item
-                    let  addSql = `replace INTO ${sqlTableName}(type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
                     let  addSqlParams = [type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline];
-                    await new Promise((resolve => {
-                        instance.query(addSql, addSqlParams,(err, res) =>{
-                            if(err) {
-                                console.log(err)
-                                let  addSql = 'INSERT INTO t_answer_err(id,i1,i2) VALUES(0,?,?)';
-                                let  addSqlParams = [i,i2];
-                                instance.query(addSql, addSqlParams,(err, res) =>{
-                                })
-                            }
-                            resolve()
-                        })
-                    }))
+
+                    valueArr.push(
+                      addSqlParams
+                    )
                 }
-                // > 100000
-                if(item.voteup_count >= gtCount) {
-                    requestArr.push(()=> {
-                        return requestItem(item)
-                    })
-                }
-                // console.log(`内：${i2}/${data.length} ---------- 外：${i}/${list.length}`)
             }
-            console.log(`${requestArr.length}条数据  ${i}/${list.length}`)
-            await Promise.all(requestArr.map(e => e()))
-            console.log(`${requestArr.length}条数据  耗时${(Date.now()-time1) / 1000}s-------- ${i}/${list.length}`)
+            console.log(`${valueArr.length}条数据-start  ${i}/${list.length}`)
+            let valueArrLength = valueArr.length
+            let maxCount = 100
+            let splitIndex = 0
+            while (valueArr.length > 0) {
+                let spliceArr = valueArr.splice(0, maxCount)
+                mysql = new MysqlUtil('xyh_test')
+                let  addSql2 = `replace INTO t_answer_test(type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline) VALUES ?`;
+                let res = await mysql.query(addSql2, [spliceArr])
+                console.log(`${valueArrLength}条数据---[${splitIndex * 100}-${splitIndex * 100 + spliceArr.length})`)
+                if(res) {
+                } else {
+                    console.log(res)
+                    let  addSql = 'INSERT INTO t_answer_err(id,i1) VALUES(0,?)';
+                    let  addSqlParams = [i];
+                    mysql = new MysqlUtil('xyh_test')
+                    await mysql.query(addSql, addSqlParams)
+                }
+                splitIndex ++
+            }
+            console.log(`${valueArrLength}条数据-end  耗时${(Date.now()-time1) / 1000}s-------- ${i}/${list.length}`)
         }
-        instance.end()
     }
 
     async sqlEssenceAnswer2md () {

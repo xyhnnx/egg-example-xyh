@@ -48,13 +48,20 @@ class MysqlUtil {
       this.instance.connect()
       this.instance.query(...args,  (err,result) => {
         if(err){
-          reject(err)
+          console.log(err)
+          resolve(false)
         } else {
           resolve(result)
         }
         this.instance.end()
       })
     }))
+  }
+  connect () {
+    this.instance.connect()
+  }
+  end () {
+    this.instance.end()
   }
 }
 

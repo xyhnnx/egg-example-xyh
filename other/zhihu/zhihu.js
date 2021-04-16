@@ -360,6 +360,7 @@ class Zhihu {
         let listIndex = listIndexRes[0].idx || 0
         console.log(`查询到进度---${listIndex}/${list.length}`)
         for(let i = 0;i<list.length;i++) {
+
             if(i < listIndex) {
                 continue
             }
@@ -390,24 +391,33 @@ class Zhihu {
             }
             console.log(`${valueArr.length}条数据-start  ${i}/${list.length}`)
             let valueArrLength = valueArr.length
-            let maxCount = 100
+            let maxCount = 50
             let splitIndex = 0
+            let resArr = []
             while (valueArr.length > 0) {
                 let spliceArr = valueArr.splice(0, maxCount)
-                mysql = new MysqlUtil('xyh_test')
-                let  addSql2 = `replace INTO t_answer_test(type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline) VALUES ?`;
-                let res = await mysql.query(addSql2, [spliceArr])
-                console.log(`${valueArrLength}条数据---[${splitIndex * 100}-${splitIndex * 100 + spliceArr.length})`)
-                if(res) {
-                } else {
-                    console.log(res)
-                    let  addSql = 'INSERT INTO t_answer_err(id,i1) VALUES(0,?)';
-                    let  addSqlParams = [i];
-                    mysql = new MysqlUtil('xyh_test')
-                    await mysql.query(addSql, addSqlParams)
+                let resItem = (spliceArr, splitIndex) => {
+                    return async () => {
+                        let time1 = Date.now()
+                        // console.log(`${valueArrLength}条数据---[${splitIndex * 100}-${splitIndex * 100 + spliceArr.length})-start`)
+                        mysql = new MysqlUtil('xyh_test')
+                        let  addSql2 = `replace INTO ${sqlTableName}(type, title, url,voteup_count,comment_count,updated_time,created_time,author_name,author_img,excerpt,content,answer_id,question_id,headline) VALUES ?`;
+                        let res = await mysql.query(addSql2, [spliceArr])
+                        console.log(`${valueArrLength}条数据---[${splitIndex * maxCount}-${splitIndex * maxCount + spliceArr.length})-end 耗时${(Date.now() - time1) / 1000}s`)
+                        if(res) {
+                        } else {
+                            console.log(res)
+                            let  addSql = 'INSERT INTO t_answer_err(id,i1) VALUES(0,?)';
+                            let  addSqlParams = [i];
+                            mysql = new MysqlUtil('xyh_test')
+                            await mysql.query(addSql, addSqlParams)
+                        }
+                    }
                 }
+                resArr.push(resItem(spliceArr, splitIndex))
                 splitIndex ++
             }
+            await Promise.all(resArr.map(e => e()))
             console.log(`${valueArrLength}条数据-end  耗时${(Date.now()-time1) / 1000}s-------- ${i}/${list.length}`)
         }
     }

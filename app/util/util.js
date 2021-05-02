@@ -9,6 +9,7 @@ const mainRedis = null; // 是个接口
 const request = require('request');
 const fs = require('fs');
 const path = require('path');
+const outputDir = '/egg-example-xyh-output'
 
 // Promise队列库
 const Queue = require('promise-queue-plus');
@@ -151,7 +152,6 @@ function makeDir(dirpath, delExists = false) {
   }
   return true;
 }
-const outputDir = '/egg-example-xyh-output'
 /*
 * list[]
 * {
@@ -245,6 +245,11 @@ async function downloadFile2(list, dirName, batch = true) {
   }
 }
 
+function stringToFile (str, fileName, dirName = 'def') {
+  let fullDir = outputDir + '/' + dirName
+  makeDir(fullDir)
+  fs.writeFileSync(path.join(fullDir, `/${fileName}`), str)
+}
 
 module.exports = {
   webUrlSplicing,
@@ -256,5 +261,7 @@ module.exports = {
   timeout,
   makeDir,
   downloadFile,
-  downloadFile2
+  downloadFile2,
+  outputDir,
+  stringToFile
 };

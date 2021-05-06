@@ -7,6 +7,7 @@ const {downloadFile, downloadFile2, makeDir, timeout} = require('../../app/util/
 const {dateFormat} = require('../../app/util/date-time-utils')
 const {geFileList} = require('../../app/util/zip-file')
 const MysqlUtil = require('../../app/util/mysql')
+const MongoUtil = require('../../app/util/mongo')
 class Zhihu {
     outputDir = '/egg-example-xyh-output' + '/zhihu-output'
 
@@ -237,7 +238,7 @@ class Zhihu {
         for (let i = 0; i < json.length; i++) {
             let item = json[i]
             let str = `${i + 1}  [${item.title}](${item.url})  
-赞同数： ${((item.voteupCount/10000).toFixed(1) *1 + '万').padEnd(10,' ')}   作者： ${item.authorName}  
+赞同数： ${((item.voteupCount/10000).toFixed(1) *1 + '万').padEnd(5,' ')}   作者： ${item.authorName}  
     
     
       
@@ -278,7 +279,7 @@ class Zhihu {
         }
         instance.end()
     }
-    async createTableEssenceAnswer (tableName = 't_answer_10000') {
+    async createTableEssenceAnswer (tableName = 't_answer_lt1000') {
         try{
             // 创建表
             let mysqlInstance = new MysqlUtil('xyh_test')
@@ -351,16 +352,15 @@ class Zhihu {
 
     async essenceAnswer2sql () {
         let gtCount = 1000
-        let sqlTableName = `t_answer_${gtCount}`
+        let sqlTableName = `t_answer_lt${gtCount}`
         console.log('读取文件--start')
         let list = geFileList(path.join(this.outputDir, '/essenceAnswer'))
         console.log('读取文件--end')
         let mysql = new MysqlUtil('xyh_test')
         let listIndexRes = await mysql.query(`select idx from t_answer_progress_index WHERE table_name = '${sqlTableName}'`)
-        let listIndex = listIndexRes[0].idx || 0
+        let listIndex = (listIndexRes[0] && listIndexRes[0].idx) || 0
         console.log(`查询到进度---${listIndex}/${list.length}`)
         for(let i = 0;i<list.length;i++) {
-
             if(i < listIndex) {
                 continue
             }
@@ -377,7 +377,7 @@ class Zhihu {
                 let e = data[i2]
                 let item = this.combineAnswer(e)
                 // > 100000
-                if(item.voteup_count >= gtCount) {
+                if(item.voteup_count < 1000) {
                     item.updated_time = dateFormat(new Date(item.updated_time * 1000).getTime(),'yyyy-MM-dd hh:mm:ss')
                     item.created_time = dateFormat(new Date(item.created_time * 1000).getTime(), 'yyyy-MM-dd hh:mm:ss')
                     item.title = String(item.title)
@@ -391,7 +391,7 @@ class Zhihu {
             }
             console.log(`${valueArr.length}条数据-start  ${i}/${list.length}`)
             let valueArrLength = valueArr.length
-            let maxCount = 50
+            let maxCount = 80
             let splitIndex = 0
             let resArr = []
             while (valueArr.length > 0) {
@@ -455,8 +455,102 @@ class Zhihu {
     }
 
 
+    async essenceAnswer2Mongo () {
+        let sqlTableName = `t_answer_all`
+        console.log('读取文件--start')
+        let list = geFileList(path.join(this.outputDir, '/essenceAnswer'))
+        console.log('读取文件--end')
+        let mysql = new MysqlUtil('xyh_test')
+        let listIndexRes = await mysql.query(`select idx from t_answer_progress_index WHERE table_name = '${sqlTableName}'`)
+        let listIndex = (listIndexRes[0] && listIndexRes[0].idx) || 0
+        console.log(`查询到进度---${listIndex}/${list.length}`)
+        let mongo
+
+        for(let i = 0;i<list.length;i++) {
+            if(i < listIndex) {
+                continue
+            }
+            let time1 = Date.now()
+            // 记录进度
+            let  addSql = `replace INTO t_answer_progress_index(table_name, idx) VALUES(?,?)`;
+            let  addSqlParams = [sqlTableName, i];
+            mysql = new MysqlUtil('xyh_test')
+            let pRes = await mysql.query(addSql, addSqlParams)
+
+
+            // 查询存储过的
+            let completedRes
+            try{
+                console.log('completedRes----------start')
+                let mongo = new MongoUtil()
+                completedRes = await mongo.find({},'t_answer_all_completed')
+                completedRes = completedRes[0] || {}
+                console.log('completedRes----------end')
+            } catch (e) {
+                console.log(e)
+            }
+
+            let data = JSON.parse(fs.readFileSync(list[i].path))
+            let valueArr = []
+            for(let i2 = 0;i2<data.length;i2++) {
+                let e = data[i2]
+                let item = this.combineAnswer(e)
+                // 没记录过的
+                if(!completedRes[item.answer_id]) {
+                    item.updated_time = dateFormat(new Date(item.updated_time * 1000).getTime(),'yyyy-MM-dd hh:mm:ss')
+                    item.created_time = dateFormat(new Date(item.created_time * 1000).getTime(), 'yyyy-MM-dd hh:mm:ss')
+                    item.title = String(item.title)
+                    valueArr.push(
+                      item
+                    )
+                }
+            }
+            console.log(`${valueArr.length}条数据-start  ${i}/${list.length}`)
+            let valueArrLength = valueArr.length
+            let maxCount = 1000
+            let splitIndex = 0
+            let resArr = []
+            while (valueArr.length > 0) {
+                let spliceArr = valueArr.splice(0, maxCount)
+                let resItem = (spliceArr, splitIndex) => {
+                    return async () => {
+                        let time1 = Date.now()
+                        // console.log(`${valueArrLength}条数据---[${splitIndex * 100}-${splitIndex * 100 + spliceArr.length})-start`)
+                        let res
+                        try {
+                            mongo = new MongoUtil()
+                            res = await mongo.insertMany(spliceArr, sqlTableName)
+                        }catch (e) {
+                            console.log(e)
+                        }
+                        if(res && res.result.ok === 1) {
+                            console.log(`${valueArrLength}条数据---[${splitIndex * maxCount}-${splitIndex * maxCount + spliceArr.length})-end 耗时${(Date.now() - time1) / 1000}s`)
+                            let obj = {}
+                            spliceArr.forEach(e => {
+                                obj[e.answer_id] = 1
+                            })
+                            mongo = new MongoUtil()
+                            await mongo.updateOne({}, obj, 't_answer_all_completed')
+                        } else {
+                            console.log(res)
+                            let  addSql = 'INSERT INTO t_answer_err(id,i1) VALUES(0,?)';
+                            let  addSqlParams = [i];
+                            mysql = new MysqlUtil('xyh_test')
+                            await mysql.query(addSql, addSqlParams)
+                        }
+                    }
+                }
+                resArr.push(resItem(spliceArr, splitIndex))
+                splitIndex ++
+            }
+            await Promise.all(resArr.map(e => e()))
+            console.log(`${valueArrLength}条数据-end  耗时${(Date.now()-time1) / 1000}s-------- ${i}/${list.length}`)
+        }
+    }
+
+
 }
 // total 553879 462155
 let z = new Zhihu()
-z.essenceAnswer2sql()
+// z.essenceAnswer2Mongo()
 module.exports = Zhihu

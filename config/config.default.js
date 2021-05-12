@@ -25,9 +25,10 @@ module.exports = appInfo => {
   const userConfig = {
     // myAppName: 'egg',
   };
+  config.rundir = '/tmp';
   // 日志目录
   config.logger = {
-    dir: '/home/root/logs/egg-example-xyh',
+    dir: '/tmp',
     appLogName: `${appInfo.name}-web.log`,
     coreLogName: 'egg-web.log',
     agentLogName: 'egg-agent.log',

@@ -2,6 +2,7 @@
   "extends": "eslint-config-egg",
   "rules": {
     "semi": 0,
+    "indent": "off",
     "strict": "off",
     "prefer-promise-reject-errors": "off",
     "quotes": "off",

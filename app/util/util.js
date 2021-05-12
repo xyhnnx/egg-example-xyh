@@ -9,6 +9,7 @@ const mainRedis = null; // 是个接口
 const request = require('request');
 const fs = require('fs');
 const path = require('path');
+const outputDir = 'd:/egg-example-xyh-output'
 
 // Promise队列库
 const Queue = require('promise-queue-plus');
@@ -120,6 +121,9 @@ function delPath(path) {
   });
   fs.rmdirSync(path);
 }
+function delFile (filePath) {
+  fs.unlinkSync(filePath);
+}
 // 创建文件夹
 function makeDir(dirpath, delExists = false) {
   if (!fs.existsSync(dirpath)) {
@@ -151,7 +155,6 @@ function makeDir(dirpath, delExists = false) {
   }
   return true;
 }
-const outputDir = '/egg-example-xyh-output'
 /*
 * list[]
 * {
@@ -245,8 +248,14 @@ async function downloadFile2(list, dirName, batch = true) {
   }
 }
 
+function stringToFile (str, fileName, dirName = 'def') {
+  let fullDir = outputDir + '/' + dirName
+  makeDir(fullDir)
+  fs.writeFileSync(path.join(fullDir, `/${fileName}`), str)
+}
 
 module.exports = {
+  ...require('./zip-file'),
   webUrlSplicing,
   arrayGroup,
   mainRedisUtil,
@@ -256,5 +265,8 @@ module.exports = {
   timeout,
   makeDir,
   downloadFile,
-  downloadFile2
+  downloadFile2,
+  outputDir,
+  stringToFile,
+  delFile
 };

@@ -14,37 +14,45 @@ async function index () {
   let mapJsonPath = path.join(__dirname, 'jj-img-status-map.json');
   let list = JSON.parse(fs.readFileSync(mapJsonPath))
   console.log(list.length)
+  let isError = false
   for (let i = 0; i < list.length; i++) {
     let e = list[i]
-    if(!e.src) { // 没有上传过
-      let filePath = 'D:\\egg-example-xyh-output\\images\\jj-img\\'+e.name
-      if(fs.existsSync(filePath)) {
+    if (!e.src) { // 没有上传过
+      let filePath = 'D:\\egg-example-xyh-output\\images\\jj-img\\' + e.name
+      if (fs.existsSync(filePath)) {
         // 上传
         let res
         try {
           res = await uploadItem({
             path: filePath
           })
-          if(res.status === 200 && res.data && res.data.code === 200 && res.data.data && res.data.data.url && res.data.data.url.distribute)  {
+          if (res.status === 200 && res.data && res.data.code === 200 && res.data.data && res.data.data.url && res.data.data.url.distribute) {
             e.src = res.data.data.url.distribute
             // 重新
             fs.writeFileSync(mapJsonPath, JSON.stringify(list))
             console.log(`${i}.文件上传成功！！`)
           } else {
             console.log(`${i}.upload err:`, res)
+            isError = true
           }
         } catch (e) {
           console.log(`${i}.catch err:${e}`)
+          isError = true
         }
-      } else{
+      } else {
         console.log(`${i}.文件不存在`)
       }
-    }else{
+    } else {
       console.log(`${i}.文件已上传`)
     }
   }
+  if(isError) {
+    index()
+  }
 
 }
+
+
 
 async function uploadItem (e) {
 

@@ -20,7 +20,7 @@ async function index () {
         try {
           images(originDir + e.name) //Load image from file
           //加载图像文件
-          .size(500) //Geometric scaling the image to 400 pixels width
+          .size(640) //Geometric scaling the image to 400 pixels width
           //等比缩放图像到400像素宽
           // .draw(images("logo.png"), 10, 10) //Drawn logo at coordinates (10,10)
           //在(10,10)处绘制Logo

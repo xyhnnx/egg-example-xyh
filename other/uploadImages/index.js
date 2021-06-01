@@ -61,7 +61,7 @@ async function uploadItem (e) {
   var fs = require('fs')
   var data = new FormData()
   data.append('image', fs.createReadStream(e.path))
-  data.append('apiType', 'bilibili,baidu,sougou,smms,sina,catbox,qihoo,suning,netease,niupic,muke,ali')
+  data.append('apiType', 'bilibili,baidu')
   data.append('token', '2a947db4af953b020e0e8dab5ae23b2f')
 
   var config = {

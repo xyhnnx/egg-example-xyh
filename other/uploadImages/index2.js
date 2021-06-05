@@ -1,10 +1,10 @@
 /*
-* 将本地文件夹里的图片上传到遇见图床（https://www.hualigs.cn/user/images）
+* 将本地文件夹里的图片上传到聚合图床（https://www.superbed.cn/）
 * */
 let fs = require('fs')
 let path = require('path')
 const {execSync, exec} = require('child_process')
-const {geFileList} = require('../../app/util/zip-file')
+const {geFileList, timeout} = require('../../app/util/util')
 const fetch = require('../../app/util/fetch')
 
 index()
@@ -23,11 +23,16 @@ async function index () {
         // 上传
         let res
         try {
+          let count = list.filter(e => `${e.src}`.startsWith('https://pic.imgdb.cn')).length
+          console.log('已经上传聚合图床数量=' + count)
+          if (count >= 999) {
+            return
+          }
           res = await uploadItem({
             path: filePath
           })
-          if (res.status === 200 && res.data && res.data.code === 200 && res.data.data && res.data.data.url && res.data.data.url.distribute) {
-            e.src = res.data.data.url.distribute
+          if (res.status === 200 && res.data && res.data.err === 0 && res.data.url) {
+            e.src = res.data.url
             // 重新
             fs.writeFileSync(mapJsonPath, JSON.stringify(list))
             console.log(`${i}.文件上传成功！！`)
@@ -39,6 +44,7 @@ async function index () {
           console.log(`${i}.catch err:${e}`)
           isError = true
         }
+        await timeout(6000)
       } else {
         console.log(`${i}.文件不存在`)
       }
@@ -59,15 +65,15 @@ async function uploadItem (e) {
   let FormData = require('form-data')
   let fs = require('fs')
   let data = new FormData()
-  data.append('image', fs.createReadStream(e.path))
-  data.append('apiType', 'bilibili,baidu')
-  data.append('token', '2a947db4af953b020e0e8dab5ae23b2f')
+  data.append('file', fs.createReadStream(e.path))
+  data.append('token', '60a4899915ba4ff78fd4cf5f5aeca44d')
+  data.append('categories', 'jj-image-tmp')
 
   let config = {
     method: 'post',
-    url: 'https://www.hualigs.cn/api/upload?image',
+    url: 'https://api.superbed.cn/upload',
     headers: {
-      'Cookie': 'hidove_lang=en-us; HIDOVE_SESSID=fea8923cf61aca3196e791b8f177eaea',
+      // 'Cookie': 'hidove_lang=en-us; HIDOVE_SESSID=fea8923cf61aca3196e791b8f177eaea',
       ...data.getHeaders()
     },
     data

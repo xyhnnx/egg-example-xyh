@@ -248,6 +248,16 @@ async function downloadFile2(list, dirName, batch = true) {
   }
 }
 
+async function downloadFileItem(url, writeFilePath) {
+  const fetch = require('./fetch')
+  let res = await fetch({
+    url,
+    method: 'get',
+    responseType: "arraybuffer"
+  })
+  fs.writeFileSync(writeFilePath, res, 'binary')
+}
+
 function stringToFile (str, fileName, dirName = 'def') {
   let fullDir = outputDir + '/' + dirName
   makeDir(fullDir)
@@ -268,5 +278,6 @@ module.exports = {
   downloadFile2,
   outputDir,
   stringToFile,
-  delFile
+  delFile,
+  downloadFileItem
 };

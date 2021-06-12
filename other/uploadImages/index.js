@@ -4,10 +4,11 @@
 let fs = require('fs')
 let path = require('path')
 const {execSync, exec} = require('child_process')
-const {geFileList} = require('../../app/util/zip-file')
+const {geFileList, timeout} = require('../../app/util/util')
 const fetch = require('../../app/util/fetch')
-
+const {dateFormat} = require('../../app/util/date-time-utils')
 index()
+
 
 async function index () {
   console.log(__dirname)
@@ -30,20 +31,21 @@ async function index () {
             e.src = res.data.data.url.distribute
             // 重新
             fs.writeFileSync(mapJsonPath, JSON.stringify(list))
-            console.log(`${i}.文件上传成功！！`)
+            console.log(`${getTime()}${i}.文件上传成功！！`)
           } else {
-            console.log(`${i}.upload err:`, res)
+            console.log(`${getTime()}${i}.upload err:`, res)
             isError = true
+            await timeout(5000)
           }
         } catch (e) {
-          console.log(`${i}.catch err:${e}`)
+          console.log(`${getTime()}${i}.catch err:${e}`)
           isError = true
         }
       } else {
-        console.log(`${i}.文件不存在`)
+        console.log(`${getTime()}${i}.文件不存在`)
       }
     } else {
-      console.log(`${i}.文件已上传`)
+      console.log(`${getTime()}${i}.文件已上传`)
     }
   }
   if (isError) {
@@ -75,3 +77,6 @@ async function uploadItem (e) {
   return axios(config)
 }
 
+function getTime() {
+  return dateFormat(Date.now(), 'yyyy-MM-dd hh:mm:ss')
+}

@@ -4,7 +4,8 @@ const path = require('path');
 const fetch = require('../../app/util/fetch')
 const asyncPool = require('tiny-async-pool')
 const distPath = 'I:\\jj-img\\'
-index();
+
+// index();
 
 async function index() {
     let downList = Util.geFileList(distPath)
@@ -54,3 +55,11 @@ async function index() {
 function getTime() {
     return require('../../app/util/date-time-utils').dateFormat(Date.now(), 'yyyy-MM-dd hh:mm:ss')
 }
+
+
+function shuffle(list) {
+    const _ = require('lodash')
+    return _.shuffle(list);
+}
+
+shuffle([{a: 1}, {a: 2}, {a: 3}, {a: 4}])

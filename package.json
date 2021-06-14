@@ -17,6 +17,7 @@
     "image-size": "^1.0.0",
     "images": "^3.2.3",
     "ioredis": "^4.16.1",
+    "lodash": "^4.17.21",
     "mongodb": "^3.6.6",
     "mongoose": "^5.12.10",
     "mysql": "^2.18.1",

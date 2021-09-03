@@ -1,4 +1,4 @@
-//const xlsx = require('xlsx');//原生的xlsx,但不支持表格的样式设置
+//const xlsx = require('xlsx');//原生的xlsx,但不支持表格的样式设置 test
 const _ = require('lodash')//引入lodash辅助工具
 const fs = require('fs')//引入fs模块用于读取文件流
 const xlsx = require('xlsx-style')//选择使用xlsx-style可以设置表格样式

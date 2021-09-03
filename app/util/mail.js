@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 const mailConfig = {
-  subjectPrefix: '自动发送',
+  subjectTitle: 'xyh',
   host: 'smtp.sina.com',
   port: 465,
   debugEnabled: false,
@@ -11,7 +11,7 @@ const mailConfig = {
     '1101099728@qq.com'
   ],
   protocol: 'smtp',
-  contentType: 'text/html;charset=gb2312',
+  contentType: 'text/html;charset=utf-8',
   authEnabled: true,
   ipv6Enabled: false,
   enabled: true,
@@ -33,12 +33,13 @@ class Mail {
     await transporter.sendMail({
       from: mailConfig.fromUsername,
       to: mailConfig.to,
-      subject: mailConfig.subjectPrefix + `subject`,
-      text: `text`,
-      html: `<p>html</p>`, // html body
+      // 标题
+      subject: mailConfig.subjectTitle,
+      // 内容
+      html: `<div>这里是html内容 2</div>`, // html body
     });
   }
 }
-new Mail().sendMail()
+// new Mail().sendMail()
 
 module.exports = Mail;

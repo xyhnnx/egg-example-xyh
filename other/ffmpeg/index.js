@@ -7,8 +7,10 @@
  * 参考链接 https://www.jianshu.com/p/fb4d81cfe14d
  * 参考链接 https://www.jianshu.com/p/273bdb4c240b
  *
+ * 使用：直接修改下面的videoDirName，
+ *      然后用node执行这个index.js 文件即可
  */
-
+const videoDirName = 'I:\\周杰伦MV系列\\周杰伦演唱会\\tem'
 // fs.mkdirSync(pathtmp)
 // fs.rmdirSync(path)
 
@@ -56,7 +58,5 @@ async function mp4FilesListToM3u8 (mp4DirName) {
   await Promise.all(waitList)
   console.log('-------over')
 }
-mp4FilesListToM3u8('D:\\ProjectXyh\\video-master\\JayMV\\JAY')
-// mp4ToM3u8('D:\\ProjectXyh\\video-master\\JayMV\\JAY\\01.可爱女人.mkv')
-
+mp4FilesListToM3u8(videoDirName)
 

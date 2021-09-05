@@ -5,8 +5,8 @@
 * */
 
 
-const originDir = 'J:\\jj-img\\origin'
-const targetDir = 'J:\\ProjectXyh\\images\\jj\\origin'
+const originDir = 'J:\\jj-img\\compress'
+const targetDir = 'J:\\ProjectXyh\\images\\jj\\compress'
 
 let fs = require('fs');
 let path = require('path');
@@ -64,7 +64,7 @@ async function removeFile() {
         let destPath = targetDir + '\\' + e.name;
         fs.renameSync(sourceFile, destPath);
     }
-    let cmd = `cd ${targetDir} && git add . && git commit -m addjjimg剩余${count - addCount} && git push`
+    let cmd = `cd ${targetDir} && git add . && git commit -m addjjimgcompress剩余${count - addCount} && git push`
     let success
     for (let i = 0; i < 200; i++) {
         if (i > 0) {

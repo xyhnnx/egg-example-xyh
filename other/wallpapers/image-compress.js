@@ -4,9 +4,9 @@ const fs = require('fs')
 const path = require('path')
 const images = require('images');
 // 要压缩的图片文件夹
-let originDir = 'G:\\ProjectXyh\\jj-img\\'
+let originDir = 'I:\\jj-img\\'
 // 压缩后的图片存放的文件夹
-let distDir = 'G:\\ProjectXyh\\jj-img-compress\\'
+let distDir = 'I:\\jj-img-compress\\'
 
 index()
 
@@ -28,9 +28,9 @@ async function index() {
                         });
                     console.log(`${i}. 图片压缩成功`)
                     resolve()
-                } catch (e) {
-                    console.log(`${i}. 图片压缩失败`)
-                    reject(e)
+                } catch (err) {
+                    console.log(`${i}. 图片压缩失败-${e.name}`)
+                    reject(err)
                 }
             })
         } else {

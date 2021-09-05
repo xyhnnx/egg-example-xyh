@@ -66,7 +66,7 @@ async function removeFile() {
     }
     let cmd = `cd ${targetDir} && git add . && git commit -m addjjimg剩余${count - addCount} && git push`
     let success
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 200; i++) {
         if (i > 0) {
             console.log(`第${i + 1}次尝试`)
         }
@@ -110,7 +110,7 @@ async function removeFile() {
             await timeout(5000)
         }
     }
-    await timeout(1000)
+    await timeout(10000)
     if (success) {
         console.log('提交成功---')
         removeFile()

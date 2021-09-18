@@ -2,9 +2,9 @@
 const path = require('path');
 const fs = require('fs');
 const cheerio = require('cheerio');
-const fetch = require('../../app/util/fetch');
-const {stringToFile, outputDir} = require('../../app/util/util')
-const {geFileList} = require('../../app/util/zip-file')
+const fetch = require('../../../app/util/fetch');
+const {stringToFile, outputDir} = require('../../../app/util/util')
+const {geFileList} = require('../../../app/util/zip-file')
 let ip = 'https://wallroom.io';
 let dirName = 'wallroom';
 

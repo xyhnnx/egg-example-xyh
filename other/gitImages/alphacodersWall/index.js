@@ -9,7 +9,7 @@ let ip = 'https://wall.alphacoders.com/featured.php'
 let dirName = 'wall.alphacoders.com'
 
 class Wall {
-    async getOnePageList (id = '9890', pageNo = 1) {
+    async getOnePageList (id, pageNo = 1) {
         // 打开页面时间
         const startTime = new Date()
         // 渲染URL
@@ -59,7 +59,8 @@ class Wall {
         let success = true
         let pageNo = 1
         do {
-            success = await this.getOnePageList(undefined, pageNo)
+            // 9889, 9890 9888 15000
+            success = await this.getOnePageList(9891, pageNo)
             pageNo++
         } while (success)
         // this.getFileList()

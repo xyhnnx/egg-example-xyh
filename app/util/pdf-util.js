@@ -8,6 +8,7 @@ const mergeUtil = require('easy-pdf-merge')
 const config = {}
 const token = {}
 const {exec} = require('child_process');
+const path = require('path')
 
 // 合并PDF
 const merge = (sourceFiles, outputFile) => {
@@ -148,11 +149,11 @@ const PDFSplit = async (params = {
  * - endPage          要停止的页面。(包含停止页)
  */
 const PDFToImage = async (params = {
-  pdfLocalPath: 'D:\\home\\xyh-test\\question.pdf',
+  pdfLocalPath: 'D:\\home\\xyh-test\\042211411_638_蔡佳琦_物理(3)(1).pdf',
   imageType: 'png',
   outputPrefix: 'output',
   startPage: 1,
-  endPage: 3,
+  endPage: 100,
 }) => {
   console.log('__dirname', __dirname)
   const cmd = `java -jar ${__dirname}\\pdfbox.jar PDFToImage -imageType ${params.imageType} -startPage ${params.startPage} -endPage ${params.endPage} ${params.pdfLocalPath}`
@@ -230,7 +231,8 @@ const OverlayPDF = async (params = {
   if (params.outputFile) {
     arr.push(`${params.outputFile}`)
   }
-  const cmd = `java -jar ${__dirname}\\pdfbox.jar OverlayPDF ${arr.join(' ')}`
+  const jarPath = path.resolve(__dirname, 'pdfbox.jar')
+  const cmd = `java -jar ${jarPath} OverlayPDF ${arr.join(' ')}`
   console.log(cmd)
   await new Promise((resolve, reject) => {
     const spawnObj = exec(cmd);
@@ -250,7 +252,7 @@ const OverlayPDF = async (params = {
       } else {
         console.log('失败-----' + code);
         // eslint-disable-next-line prefer-promise-reject-errors
-        reject(false)
+        reject(code)
       }
     })
   })

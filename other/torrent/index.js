@@ -4,6 +4,7 @@ var moment = require('moment')
 var client = new WebTorrent()
 const path = 'D:\\egg-example-xyh-output\\torrent'
 var magnetURI = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent'
+// var magnetURI = 'https://webtorrent.io/torrents/sintel.torrent'
 client.add(magnetURI, { path: path }, function (torrent) {
 
   // Torrents can contain many files. Let's use the .mp4 file
@@ -13,7 +14,7 @@ client.add(magnetURI, { path: path }, function (torrent) {
 
   // Trigger statistics refresh
   torrent.on('done', onDone)
-  setInterval(onProgress, 500)
+  const timer = setInterval(onProgress, 500)
   onProgress()
 
   // Statistics
@@ -23,7 +24,7 @@ client.add(magnetURI, { path: path }, function (torrent) {
 
     // Progress
     var percent = Math.round(torrent.progress * 100 * 100) / 100
-    const percentVal = percent + '%'
+    const $percent = percent + '%'
     const $downloaded = prettyBytes(torrent.downloaded)
     const $total = prettyBytes(torrent.length)
 
@@ -42,7 +43,7 @@ client.add(magnetURI, { path: path }, function (torrent) {
     const  $uploadSpeed = prettyBytes(torrent.uploadSpeed) + '/s'
     console.clear()
     console.log('$numPeers', $numPeers)
-    console.log('percentVal', percentVal)
+    console.log('$percent', $percent)
     console.log('$downloaded', $downloaded)
     console.log('$total', $total)
     console.log('$remaining', $remaining)
@@ -50,8 +51,9 @@ client.add(magnetURI, { path: path }, function (torrent) {
     console.log('$uploadSpeed', $uploadSpeed)
   }
   function onDone () {
-    console.log('onDone')
     onProgress()
+    clearInterval(timer)
+    console.log('---onDone---')
   }
 })
 

@@ -1,6 +1,6 @@
 const {exec} = require('child_process');
 const path = require('path');
-const { makeDir, geFileList } = require('../../app/util/util')
+const { makeDir, geFileList, getFilenameInfoByPath } = require('../../app/util/util')
 
 /**
  * 使用 pdfbox.jar对pdf文件转图片(https://pdfbox.apache.org/2.0/commandline.html)
@@ -167,7 +167,43 @@ const PDFSplit = async (params = {
   })
 }
 
+const PDFMerger = async (params = {
+  pdfFileList: [
+    'D:/阿里云盘/test/cover.pdf',
+    'D:/阿里云盘/test/《云上朗读者》.pdf'
+  ],
+  outputFile: 'D:/阿里云盘/test/merge/output.pdf'
+}) => {
+  makeDir(getFilenameInfoByPath(params.outputFile).fileDir)
+  const  fileListString = params.pdfFileList.join(' ')
+  const cmd = `java -jar ${__dirname}\\pdfbox.jar PDFMerger ${fileListString} ${params.outputFile}`
+  console.log(cmd)
+  await new Promise((resolve, reject) => {
+    const spawnObj = exec(cmd);
+    spawnObj.stdout.on('data', function (chunk) {
+      console.log('stdout-----', chunk.toString());
+    });
+    spawnObj.stderr.on('data', data => {
+      console.log('stderr-----', data);
+    });
+    spawnObj.on('exit', code => {
+      console.log('exit-----: ' + code);
+    })
+    spawnObj.on('close', code => {
+      if (code === 0) {
+        console.log('成功-----' + code);
+        resolve(true)
+      } else {
+        console.log('失败-----' + code);
+        // eslint-disable-next-line prefer-promise-reject-errors
+        reject(false)
+      }
+    })
+  })
+}
+
 const utils = {
+  PDFMerger,
   PDFSplit,
   OverlayPDF,
   PDFToImage,

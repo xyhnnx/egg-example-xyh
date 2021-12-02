@@ -263,7 +263,20 @@ function stringToFile (str, fileName, dirName = 'def') {
   makeDir(fullDir)
   fs.writeFileSync(path.join(fullDir, `/${fileName}`), str)
 }
-
+// 根据文件路径获取文件名称
+function getFilenameInfoByPath (filePath) {
+  let template = filePath.split('/')[filePath.split('/').length - 1]
+  let fileName = template.split('\\')[template.split('\\').length - 1]
+  const fileSuffix = fileName.toString().substr(fileName.lastIndexOf('.') + 1)
+  const fileNameNoSuffix = fileName.slice(0, fileName.lastIndexOf('.'))
+  const fileDir = path.join(filePath, '../')
+  return {
+    fileName,
+    fileNameNoSuffix,
+    fileSuffix,
+    fileDir
+  }
+}
 module.exports = {
   ...require('./zip-file'),
   webUrlSplicing,
@@ -279,5 +292,6 @@ module.exports = {
   outputDir,
   stringToFile,
   delFile,
+  getFilenameInfoByPath,
   downloadFileItem
 };

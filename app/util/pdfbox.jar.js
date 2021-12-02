@@ -1,3 +1,6 @@
+const {exec} = require('child_process');
+const path = require('path');
+const { makeDir, geFileList } = require('../../app/util/util')
 
 /**
  * 使用 pdfbox.jar对pdf文件转图片(https://pdfbox.apache.org/2.0/commandline.html)
@@ -8,14 +11,18 @@
  * - endPage          要停止的页面。(包含停止页)
  */
 const PDFToImage = async (params = {
-  pdfLocalPath: 'D:\\home\\xyh-test\\042211411_638_蔡佳琦_物理(3)(1).pdf',
+  pdfLocalPath: 'D:/dingding/错题本样例/90109_1班_樊宇栋_九年级数学.pdf',
   imageType: 'png',
-  outputPrefix: 'output',
   startPage: 1,
   endPage: 100,
 }) => {
+  console.log(params.pdfLocalPath)
+  let fileName = params.pdfLocalPath.split('/')[params.pdfLocalPath.split('/').length - 1]
+  const outputPrefix = path.resolve(params.pdfLocalPath, '../', fileName.slice(0, fileName.lastIndexOf('.')))
+  console.log('outputPrefix', outputPrefix)
+  makeDir(outputPrefix)
   console.log('__dirname', __dirname)
-  const cmd = `java -jar ${__dirname}\\pdfbox.jar PDFToImage -imageType ${params.imageType} -startPage ${params.startPage} -endPage ${params.endPage} ${params.pdfLocalPath}`
+  const cmd = `java -jar ${__dirname}\\pdfbox.jar PDFToImage -imageType ${params.imageType} -startPage ${params.startPage} -endPage ${params.endPage} -outputPrefix ${outputPrefix}\\ -dpi 300 ${params.pdfLocalPath} `
 
   await new Promise((resolve, reject) => {
     const spawnObj = exec(cmd);
@@ -166,3 +173,18 @@ const utils = {
   PDFToImage,
 }
 module.exports = utils
+
+
+// async function test () {
+//   const fileList = geFileList('D:/dingding/错题本样例')
+//   for(let i = 0;i<fileList.length;i++) {
+//     const e = fileList[i]
+//     await PDFToImage({
+//       pdfLocalPath: e.path,
+//       imageType: 'png',
+//       startPage: 1,
+//       endPage: 100,
+//     })
+//   }
+// }
+// test()

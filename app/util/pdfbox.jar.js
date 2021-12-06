@@ -135,10 +135,10 @@ const OverlayPDF = async (params = {
  * - endPage          要停止的页面。(包含停止页)
  */
 const PDFSplit = async (params = {
-  pdfLocalPath: 'D:\\home\\xyh-test\\question.pdf',
-  split: 1,
-  startPage: 1,
-  endPage: 100,
+  pdfLocalPath: 'D:\\阿里云盘\\test\\个性化成长手册.pdf',
+  split: 1000,
+  startPage: 2,
+  endPage: 1000,
 }) => {
   console.log('__dirname', __dirname)
   const cmd = `java -jar ${__dirname}\\pdfbox.jar PDFSplit -split ${params.split} -startPage ${params.startPage} -endPage ${params.endPage} ${params.pdfLocalPath}`
@@ -211,16 +211,4 @@ const utils = {
 module.exports = utils
 
 
-// async function test () {
-//   const fileList = geFileList('D:/dingding/错题本样例')
-//   for(let i = 0;i<fileList.length;i++) {
-//     const e = fileList[i]
-//     await PDFToImage({
-//       pdfLocalPath: e.path,
-//       imageType: 'png',
-//       startPage: 1,
-//       endPage: 100,
-//     })
-//   }
-// }
-// test()
+

@@ -31,7 +31,17 @@ const generatePdf = async (data) => {
     })
     try {
       // 等待页面渲染完成 #render-finish
-      await page.waitForSelector('#renderFinish', {visible: true, timeout: 1000 * 60})
+      // await page.waitForSelector('#renderFinish', {visible: true, timeout: 1000 * 60})
+      /*      waitUntil 参数
+      load - 页面的load事件触发时
+      domcontentloaded - 页面的DOMContentLoaded事件触发时
+      networkidle0 - 不再有网络连接时触发（至少500毫秒后）
+      networkidle2 - 只有2个网络连接时触发（至少500毫秒后）
+      */
+      await page.waitForNavigation({
+        waitUntil: "load",
+        timeout: 10000
+      })
     } catch (e) {
       console.log('waitForSelector:err', e)
       console.log(e)
@@ -150,7 +160,7 @@ const html2pdf = async (params) => {
 }
 
 html2pdf({
-  url: path.join(__dirname, 'test.html'),
+  url: 'https://www.imooc.com/wenda/detail/625147',
   fileName: 'test.pdf'
 })
 

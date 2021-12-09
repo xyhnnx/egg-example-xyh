@@ -22,6 +22,9 @@ const redisQueueInstance = Queue(2, {
 
 // web URL 拼接
 const webUrlSplicing = (url, params) => {
+  if(!(Object.keys(params).length)) {
+    return url
+  }
   const paramArray = Object.entries(params)
     .map(paramItemArr => `${paramItemArr[0]}=${paramItemArr[1]}`);
   const paramString = paramArray.join('&');

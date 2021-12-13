@@ -16,96 +16,22 @@ const archiver = require('archiver');
  * @returns {Promise<any>}
  */
 
-function fileCompressed(filePath, options) {
-  return new Promise((resolve, reject) => {
-    // 开始压缩时间
-    const startCompressTime = new Date();
-    const filePathZip = `/home/root/data/browser-export/zip/${options.zipDir}/${options.id}/${startCompressTime.getTime()}`;
-    // 创建文件夹
-    makeDir(filePathZip);
 
-    // 创建文件输出流
-    const output = fs.createWriteStream(filePathZip + `/${options.fileName}.zip`);
-    const archive = archiver('zip', {
-      zlib: { // 设置压缩级别
-        level: 9,
-      },
-    });
-
-    // 文件输出流结束
-    output.on('close', async () => {
-      const size = archive.pointer();
-      console.log(`总共 ${size} 字节`);
-      console.log('archiver完成文件的归档，文件输出流描述符已关闭');
-      console.log(`压缩耗时：${new Date() - startCompressTime}ms`);
-      options.logger.info(`压缩耗时：${new Date() - startCompressTime}ms`);
-      // 将压缩包上传到oss
-      try {
-        // await uploadOss(filePathZip, options);
-        // options.logger.info(`上传完成:${options.id},文件大小:${size}字节`);
-        // // 删除压缩后的文件
-        // delPath(filePathZip);
-        // // 删除临时文件
-        // delPath(filePath);
-        resolve(size);
-      } catch (e) {
-        console.log(e);
-        reject(e);
-      }
-    });
-
-    // 数据源是否耗尽
-    output.on('end', function() {
-      console.log('数据源已耗尽');
-    });
-
-    // 存档警告
-    archive.on('warning', function(err) {
-
-      if (err.code === 'ENOENT') {
-        console.warn('stat故障和其他非阻塞错误');
-        reject(err);
-      } else {
-        reject(err);
-      }
-    });
-
-    // 存档出错
-    archive.on('error', function(err) {
-      reject(err);
-    });
-
-    // 通过管道方法将输出流存档到文件
-    archive.pipe(output);
-    fs.readdirSync(filePath)
-      .forEach(fileName => {
-        const filedir = filePath + '/' + fileName;
-        // 追加一个文件
-        // archive.file(filedir, { name: 'file4.txt' });
-        // console.log(fs.createReadStream(filedir))
-        try {
-          archive.append(fs.createReadStream(filedir), { name: fileName });
-        } catch (e) {
-          reject(e);
-        }
-      });
-    // 完成归档
-    archive.finalize();
-  });
-}
-
-
-// 删除文件夹下的文件
+// 删除文件夹下的文件以及文件夹
 function delPath(path) {
   // 删除文件
   const files = fs.readdirSync(path);
   // 遍历读取到的文件列表
-  files.forEach(function(filename) {
-    const filedir = path + '/' + filename;
-    fs.unlinkSync(filedir);
+  files.forEach(function (filename) {
+    const currentPath = path + '/' + filename
+    const states = fs.statSync(currentPath);
+    if (states.isDirectory()) {
+      delPath(currentPath)
+    } else {
+      fs.unlinkSync(currentPath);
+    }
   });
   // 删除文件夹
-  console.log('------------------');
   fs.rmdirSync(path);
 }
 
@@ -176,9 +102,108 @@ function getDirSize(path) {
     });
   return size;
 }
+// 文件目录树
+function dirTree(filename) {
+  let stats = fs.lstatSync(filename),
+    info = {
+      path: filename,
+      name: path.basename(filename)
+    };
+
+  if (stats.isDirectory()) {
+    info.type = "folder";
+    info.children = fs.readdirSync(filename).map(function (child) {
+      return dirTree(path.join(filename, child));
+    });
+  } else {
+    // Assuming it's a file. In real life it could be a symlink or
+    // something else!
+    info.type = "file";
+  }
+  return info;
+}
+// dirTree('D:\\home\\root\\data\\browser-export\\wrong-download-v3\\pdf')
+
+/**
+ * 打包文件夹
+ * 注意： outDirPath文件夹不能在inputDirPath文件夹内
+ * @param inputDirPath 要打包成zip的文件夹
+ * @param outDirPath 打包后的zip文件存放的位置
+ * @returns {Promise<unknown>}
+ */
+function zipDir (inputDirPath, outDirPath) {
+  return new Promise((resolve, reject) => {
+    let template = inputDirPath.split('/')[inputDirPath.split('/').length - 1]
+    let inputDirPathDirName = template.split('\\')[template.split('\\').length - 1]
+    // 开始压缩时间
+    const startCompressTime = new Date()
+    let filePathZip
+    if (outDirPath) {
+      // 不存在则创建文件夹
+      if (!fs.existsSync(outDirPath)) {
+        makeDir(outDirPath)
+      }
+      filePathZip = path.join(outDirPath, `${inputDirPathDirName}.zip`)
+    } else {
+      filePathZip = path.join(inputDirPath, '../', `${inputDirPathDirName}.zip`)
+    }
+    // 创建文件输出流
+    const output = fs.createWriteStream(filePathZip);
+    const archive = archiver('zip', {
+      zlib: {level: 1} // 设置压缩级别
+    })
+
+    // 文件输出流结束
+    output.on('close', async () => {
+      const size = archive.pointer()
+      console.log(`总共 ${size} 字节`)
+      console.log('archiver完成文件的归档，文件输出流描述符已关闭')
+      console.log(`压缩耗时：${new Date() - startCompressTime}ms`)
+      resolve(size)
+    })
+
+    // 数据源是否耗尽
+    output.on('end', function () {
+      console.log('数据源已耗尽')
+    })
+
+    // 存档警告
+    archive.on('warning', function (err) {
+      if (err.code === 'ENOENT') {
+        console.warn('stat故障和其他非阻塞错误')
+        reject(err)
+      } else {
+        reject(err)
+      }
+    })
+
+    // 存档出错
+    archive.on('error', function (err) {
+      reject(err)
+    })
+
+    // 通过管道方法将输出流存档到文件
+    archive.pipe(output);
+    fs.readdirSync(inputDirPath).forEach(fileName => {
+      const filedir = path.join(inputDirPath, fileName)
+      try {
+        const states = fs.statSync(filedir);
+        if (states.isDirectory()) { // 如果是文件夹
+          archive.directory(`${filedir}/`, fileName);
+        } else {
+          archive.append(fs.createReadStream(filedir), {name: fileName})
+        }
+      } catch (e) {
+        reject(e)
+      }
+    })
+    // 完成归档
+    archive.finalize()
+  })
+}
+// zipDir('D:\\home\\xyh-test', 'D:\\home\\xyh-test-output')
 
 module.exports = {
-  fileCompressed,
   makeDir,
   delPath,
   geFileList,

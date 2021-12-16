@@ -57,6 +57,18 @@ class MysqlUtil {
       })
     }))
   }
+  async instanceQuery (...args) {
+    return new Promise(((resolve, reject) => {
+      this.instance.query(...args,  (err,result) => {
+        if(err){
+          console.log(err)
+          resolve(false)
+        } else {
+          resolve(result)
+        }
+      })
+    }))
+  }
   connect () {
     this.instance.connect()
   }

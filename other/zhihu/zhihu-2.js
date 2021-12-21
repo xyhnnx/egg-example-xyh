@@ -153,7 +153,7 @@ async function answers () {
           await mysqlInstance.instanceQuery(`UPDATE t_zhihu_topics SET status=2 WHERE id = ${topicItem.id}`)
           return answers()
         }
-        await Util.timeout()
+        await Util.timeout(10000)
       }
     }
     if (res) {
@@ -200,4 +200,190 @@ async function answers () {
   }
 }
 
-answers()
+// answers()
+
+
+// 获取潜力问题
+async function getPotentialAll () {
+  let mysqlInstance = new MysqlUtil('xyh_test')
+  mysqlInstance.connect()
+  let hasNext = true
+  let offset = 0
+  while (hasNext) {
+    console.log(`offset = ${offset}`)
+    let res = null
+    for (let tryCount = 0; tryCount < 3; tryCount++) {
+      try {
+        res = await getPotential(offset)
+        break
+      } catch (e) {
+        console.log(`getPotential第${tryCount + 1}次尝试-${url}---${e}`)
+        if (tryCount === 2) {
+        }
+        await Util.timeout()
+      }
+    }
+    if (res) {
+      if (res.is_end) {
+        hasNext = false
+      } else {
+        hasNext = true
+        offset += 10
+      }
+      for (let i = 0; i < res.data.length; i++) {
+        const question = res.data[i].question || {}
+        const topics = question.topics || []
+        for (let j = 0; j < topics.length; j++) {
+          const topicId = topics[j].url_token
+          const url = `https://www.zhihu.com/topic/${topicId}`
+          const addArr = [ url, topicId, 0 ]
+          // 查询是否存在
+          const countRes = await mysqlInstance.instanceQuery(`SELECT COUNT(*) FROM t_zhihu_topics WHERE url_id=${topicId}`)
+          const currentCount = countRes[0]['COUNT(*)']
+          if (currentCount === 0) { // 不存在则添加
+            console.log('INSERT--', addArr)
+            let addSql = `INSERT INTO t_zhihu_topics(url,url_id, status) VALUES(?,?,?)`
+            let res = await mysqlInstance.instanceQuery(addSql, addArr)
+          } else {
+            console.log(`topicId=${topicId}已存在`)
+          }
+        }
+      }
+    } else {
+      hasNext = false
+    }
+    console.log('hasNext = ', hasNext)
+    await Util.timeout()
+  }
+
+  mysqlInstance.end()
+
+}
+
+// 获取潜力问题
+async function getPotential (offset = 0) {
+  //
+  url = `https://www.zhihu.com/api/v4/creators/rank/potential?domain=0&sort_type=all&limit=20&offset=${offset}`
+  const res = await fetch({
+    url,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    method: 'get',
+    timeout: 60000
+  })
+  console.log(res)
+  if (res && res.data && res.data.length) {
+    let data = res.data.map(e => {
+      return {
+        ...e
+      }
+    })
+    return {
+      data,
+      is_end: res.paging.is_end
+    }
+  } else {
+    return false
+  }
+}
+
+// getPotentialAll()
+
+
+// https://api.zhihu.com/answers/816451790
+
+//
+
+async function getAnswerInfo (answerId) {
+  let res = await fetch({
+    url: `https://api.zhihu.com/answers/${answerId}`
+  })
+  if (res && res.id) {
+    const question = res.question || {}
+    const author = res.author || {}
+    const answer_type = res.answer_type || null
+    const answer_id = res.id || null
+    const created_time = res.created_time || null
+    const updated_time = res.updated_time || null
+    const type = res.type || null
+    const question_id = question.id || null
+    const question_title = question.title || null
+    const question_type = question.type || null
+    const author_name = author.name || null
+    const author_type = author.type || null
+    const author_id = author.id || null
+    const obj = {
+      answer_type,
+      answer_id,
+      created_time,
+      updated_time,
+      type,
+      question_id,
+      question_title,
+      question_type,
+      author_name,
+      author_type,
+      author_id
+    }
+    return obj
+  }
+}
+// getAnswerInfo(816451790)
+
+async function getAnswerInfoAll () {
+  let mysqlInstance = new MysqlUtil('xyh_test')
+  mysqlInstance.connect()
+  const countRes = await mysqlInstance.instanceQuery(`SELECT * FROM t_zhihu_answers WHERE status IS null ORDER BY voteup_count DESC LIMIT 1`)
+  const item = countRes[0]
+  if (!item) {
+    await mysqlInstance.end()
+    return
+  }
+  if(item.voteup_count < 10000) {
+    await mysqlInstance.end()
+    console.log(`${new Date()}-----------------sleep 10 min-------------------`)
+    await Util.timeout(10*60*1000)
+    return getAnswerInfoAll()
+  }
+  const answer_id = item.answer_id
+  console.log(`start---answer_id=${answer_id}`)
+  let res = null
+  let isError = false
+  for (let tryCount = 0; tryCount < 3; tryCount++) {
+    try {
+      res = await getAnswerInfo(answer_id)
+      break
+    } catch (e) {
+      console.log(`getAnswerInfo${tryCount + 1}次尝试---${e}`)
+      if (tryCount === 2) {
+        isError = true
+      }
+      await Util.timeout()
+    }
+  }
+
+  if (res && res.answer_id && !isError) {
+    try {
+      const fieldArray = ['answer_type','answer_id','created_time','updated_time','type','question_id','question_title','question_type','author_name','author_type','author_id']
+      let addSql = `REPLACE INTO t_zhihu_answers_info(${fieldArray.join(',')}) VALUES(${fieldArray.map(e => '?').join(',')})`
+      let sqlRes = await mysqlInstance.instanceQuery(addSql, fieldArray.map(e => res[e] || null))
+      console.log(`answer_id = ${answer_id} INSERT success voteup_count=${item.voteup_count}`)
+    }catch (e) {
+      console.log(e)
+      isError = true
+    }
+  }
+  if (isError) {
+    console.log(`answer_id = ${answer_id} 获取并报存详情失败！！！`)
+    // 修改为异常
+    await mysqlInstance.instanceQuery(`UPDATE t_zhihu_answers SET status=2 WHERE answer_id = ${answer_id}`)
+  } else {
+    // 修改为成功
+    await mysqlInstance.instanceQuery(`UPDATE t_zhihu_answers SET status=1 WHERE answer_id = ${answer_id}`)
+  }
+  await mysqlInstance.end()
+  getAnswerInfoAll()
+}
+
+getAnswerInfoAll()

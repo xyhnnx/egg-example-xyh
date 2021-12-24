@@ -151,9 +151,10 @@ async function answers () {
         if (tryCount === 2) {
           // 修改为异常
           await mysqlInstance.instanceQuery(`UPDATE t_zhihu_topics SET status=2 WHERE id = ${topicItem.id}`)
+          await mysqlInstance.end()
           return answers()
         }
-        await Util.timeout(10000)
+        await Util.timeout(60000)
       }
     }
     if (res) {
@@ -165,6 +166,9 @@ async function answers () {
       for (let i = 0; i < res.data.length; i++) {
         const target = res.data[i].target || {}
         let voteup_count = target.voteup_count
+        if (voteup_count < 1000) {
+          continue;
+        }
         let comment_count = target.comment_count
         let answerId = target.id
         let questionId = (target.question && target.question.id) || null
@@ -192,7 +196,7 @@ async function answers () {
       await mysqlInstance.instanceQuery(`UPDATE t_zhihu_topics SET status=1 WHERE id = ${topicItem.id}`)
     }
     console.log('hasNext = ', hasNext)
-    await Util.timeout()
+    await Util.timeout(2000)
   }
   await mysqlInstance.end()
   if (hasNext === false) {
@@ -200,7 +204,7 @@ async function answers () {
   }
 }
 
-// answers()
+answers()
 
 
 // 获取潜力问题

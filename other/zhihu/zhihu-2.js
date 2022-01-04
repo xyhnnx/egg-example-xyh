@@ -192,6 +192,8 @@ async function answers () {
       console.log(res.data.map(e => e.target.id).join(','))
     } else {
       hasNext = false
+    }
+    if(hasNext === false) {
       // 修改为完成
       await mysqlInstance.instanceQuery(`UPDATE t_zhihu_topics SET status=1 WHERE id = ${topicItem.id}`)
     }

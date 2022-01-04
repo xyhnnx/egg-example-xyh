@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
-
+archiver.registerFormat('zip-encrypted', require("archiver-zip-encrypted"));
 /**
  * 文件压缩及上传
  * @param filePath
@@ -131,7 +131,7 @@ function dirTree(filename) {
  * @param outDirPath 打包后的zip文件存放的位置
  * @returns {Promise<unknown>}
  */
-function zipDir (inputDirPath, outDirPath) {
+function zipDir (inputDirPath, outDirPath, password) {
   return new Promise((resolve, reject) => {
     let template = inputDirPath.split('/')[inputDirPath.split('/').length - 1]
     let inputDirPathDirName = template.split('\\')[template.split('\\').length - 1]
@@ -149,9 +149,15 @@ function zipDir (inputDirPath, outDirPath) {
     }
     // 创建文件输出流
     const output = fs.createWriteStream(filePathZip);
-    const archive = archiver('zip', {
-      zlib: {level: 1} // 设置压缩级别
-    })
+    let archive
+    if(password) {
+      archive = archiver.create('zip-encrypted', {zlib: {level: 8}, encryptionMethod: 'aes256', password});
+    } else {
+      archive = archiver('zip', {
+        zlib: {level: 1} // 设置压缩级别
+      })
+    }
+
 
     // 文件输出流结束
     output.on('close', async () => {
@@ -201,7 +207,7 @@ function zipDir (inputDirPath, outDirPath) {
     archive.finalize()
   })
 }
-// zipDir('D:\\home\\xyh-test', 'D:\\home\\xyh-test-output')
+zipDir('D:\\home\\xyh-test', 'D:\\home\\', '123')
 
 module.exports = {
   makeDir,

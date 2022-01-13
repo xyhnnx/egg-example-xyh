@@ -176,6 +176,9 @@ async function answers () {
         // if(questionId === null && target.type !== 'article') {
         //   console.log(target)
         // }
+        if (!answerId && !questionId) {
+          continue;
+        }
         // 查询是否存在
         const countRes = await mysqlInstance.instanceQuery(`SELECT COUNT(*) FROM t_zhihu_answers WHERE question_id=${questionId} AND answer_id=${answerId}`)
         const currentCount = countRes[0]['COUNT(*)']
@@ -361,7 +364,7 @@ async function getAnswerInfoAll () {
       res = await getAnswerInfo(answer_id)
       break
     } catch (e) {
-      console.log(`getAnswerInfo${tryCount + 1}次尝试---${e}`)
+      console.log(`getAnswerInfo${tryCount + 1}次尝试--answer_id=${answer_id}---${e}`)
       if (tryCount === 2) {
         isError = true
       }

@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "archiver": "^5.3.0",
+    "archiver-zip-encrypted": "^1.0.10",
     "axios": "^0.19.2",
     "cheerio": "^1.0.0-rc.3",
     "easy-pdf-merge": "^0.2.6",
@@ -26,9 +27,10 @@
     "node-xlsx": "^0.16.1",
     "nodemailer": "^6.6.2",
     "promise-queue-plus": "^1.2.2",
-    "puppeteer": "^5.2.1",
+    "puppeteer": "13.0.1",
     "request": "^2.88.2",
     "tiny-async-pool": "^1.2.0",
+    "urlencode": "^1.1.0",
     "webtorrent": "^1.5.8"
   },
   "devDependencies": {

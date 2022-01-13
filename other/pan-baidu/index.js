@@ -9,18 +9,35 @@ const Util = require('../../app/util/util')
  * @returns {Promise<string>}
  */
 const getAccessToken = async () => {
+  // 1 在浏览器打开此页面
+  // 2 然后在页面上授权登录；然后改页面会重定向到一个有access_token的页面
+  // https://openapi.baidu.com/oauth/2.0/authorize?response_type=token&client_id=L6g70tBRRIXLsY0Z3HwKqlRE&redirect_uri=oob&scope=netdisk
+}
+/**
+ * 获取userInfo
+ * @param access_token
+ * @returns {Promise<void>}
+ */
+const getUserInfo = async (access_token = '123.e05eaafa151dbf1b05ba366d0a8d7d14.Ymg9xrXnntNwA90QmTNpOl8bNM9Z8yhbGAUEsmD.drAsjw') => {
+  var axios = require('axios');
   var config = {
     method: 'get',
-    url: 'https://openapi.baidu.com/oauth/2.0/token?grant_type=client_credentials&client_id=MTDYS8yKR1b4srXmFE5xEKkK6GhPffEV&client_secret=q2z8AyqHUTPLsMc8drewQ0fYoDRqRqXg',
-    headers: {
-      'Cookie': 'BIDUPSID=A645E5C0BC497970044AEE4758773A09; PSTM=1640329350; BAIDUID=A645E5C0BC4979707E5EA119A0B9F0F4:FG=1'
+    url: 'https://pan.baidu.com/rest/2.0/xpan/nas?method=uinfo',
+    params: {
+      'access_token':access_token
     }
   };
-  const response = await axios(config)
-  console.log(response)
-  return JSON.stringify(response.data)
+  axios(config)
+  .then(function (response) {
+    console.log(JSON.stringify(response.data));
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
+
 }
-console.log(getAccessToken())
+
+console.log(getUserInfo())
 console.log(urlencode('/apps/test.jpg'))
 console.log(Util.getFileSize('./test.jpg'))
 console.log(Util.getFileMd5('./test.jpg'))

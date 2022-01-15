@@ -261,6 +261,12 @@ function stringToFile (str, fileName, dirName = 'def') {
   makeDir(fullDir)
   fs.writeFileSync(path.join(fullDir, `/${fileName}`), str)
 }
+
+// 把路径统一标准化为（如：将D:/test\\test.png --> D:/test/test.png）
+function getStandardFilePath (path) {
+  return path.replace(/\\/g, "/")
+}
+
 // 根据文件路径获取文件名称
 function getFilenameInfoByPath (filePath) {
   let template = filePath.split('/')[filePath.split('/').length - 1]
@@ -272,7 +278,7 @@ function getFilenameInfoByPath (filePath) {
     fileName,
     fileNameNoSuffix,
     fileSuffix,
-    fileDir
+    fileDir: getStandardFilePath(fileDir)
   }
 }
 
@@ -412,29 +418,19 @@ function dirTree(filename) {
 
 /**
  * 打包文件夹
- * 注意： outDirPath文件夹不能在inputDirPath文件夹内
+ * 注意： outFilePath文件不能在inputDirPath文件夹内
  * @param inputDirPath 要打包成zip的文件夹
- * @param outDirPath 打包后的zip文件存放的位置
+ * @param outFilePath 打包后的zip文件;如  D:/test/test.zip
  * @returns {Promise<unknown>}
  */
-function zipDir (inputDirPath, outDirPath, password) {
+function zipDir (inputDirPath, outFilePath, password) {
   return new Promise((resolve, reject) => {
     let template = inputDirPath.split('/')[inputDirPath.split('/').length - 1]
     let inputDirPathDirName = template.split('\\')[template.split('\\').length - 1]
     // 开始压缩时间
     const startCompressTime = new Date()
-    let filePathZip
-    if (outDirPath) {
-      // 不存在则创建文件夹
-      if (!fs.existsSync(outDirPath)) {
-        makeDir(outDirPath)
-      }
-      filePathZip = path.join(outDirPath, `${inputDirPathDirName}.zip`)
-    } else {
-      filePathZip = path.join(inputDirPath, '../', `${inputDirPathDirName}.zip`)
-    }
     // 创建文件输出流
-    const output = fs.createWriteStream(filePathZip);
+    const output = fs.createWriteStream(outFilePath);
     let archive
     if(password) {
       archive = archiver.create('zip-encrypted', {zlib: {level: 8}, encryptionMethod: 'aes256', password});
@@ -497,6 +493,8 @@ function zipDir (inputDirPath, outDirPath, password) {
 
 module.exports = {
   makeDir,
+  getStandardFilePath,
+  zipDir,
   delPath,
   geFileList,
   getDirSize,

@@ -1,8 +1,8 @@
 //const xlsx = require('xlsx');//原生的xlsx,但不支持表格的样式设置 test
 const _ = require('lodash')//引入lodash辅助工具
 const fs = require('fs')//引入fs模块用于读取文件流
-const xlsx = require('xlsx-style')//选择使用xlsx-style可以设置表格样式
-
+// const xlsx = require('xlsx-style')//选择使用xlsx-style可以设置表格样式
+const Util = require('../app/util/util')
 function test () {
   console.log('接受到的result风格参数  =  ', req.params.id)
   //excel的导出
@@ -93,4 +93,10 @@ function test () {
   console.log(buffer)
 }
 
-test()
+// test()
+
+function test2 () {
+  const list = Util.geFileList('D:\\干货整理\\Python精品学习书籍').map(e => e.name)
+  console.log(list)
+}
+test2()

@@ -396,3 +396,62 @@ async function getAnswerInfoAll () {
 }
 
 getAnswerInfoAll()
+
+
+
+
+
+
+
+const sqlEssenceAnswer2md = async () => {
+  let mysqlInstance = new MysqlUtil('xyh_test')
+  let res = await mysqlInstance.query(`
+              SELECT t_zhihu_answers.answer_id,
+                     t_zhihu_answers.question_id,
+                     t_zhihu_answers.voteup_count,
+                     t_zhihu_answers_info.question_title,
+                     t_zhihu_answers_info.author_name
+              FROM t_zhihu_answers
+              INNER JOIN t_zhihu_answers_info
+              ON t_zhihu_answers.answer_id = t_zhihu_answers_info.answer_id
+              ORDER BY t_zhihu_answers.voteup_count DESC LIMIT 10
+              `)
+
+  console.log(res)
+  const list = res.map(e => {
+    let url
+    if(e.answer_id && e.question_id) {
+      url = `https://www.zhihu.com/question/${e.question_id}/answer/${e.answer_id}`
+    } else {
+      url = `http://zhuanlan.zhihu.com/p/${e.answer_id}`
+    }
+
+    return {
+      title: e.question_title,
+      url: url,
+      voteupCount: e.voteup_count,
+      authorName: e.author_name,
+    }
+  })
+  this.json2md(list, 'top')
+}
+
+// sqlEssenceAnswer2md()
+
+
+const json2md = (json, fileName) => {
+  let arr = []
+  for (let i = 0; i < json.length; i++) {
+    let item = json[i]
+    let str = `${i + 1}  [${item.title}](${item.url})  
+赞同数： ${((item.voteupCount/10000).toFixed(1) *1 + '万').padEnd(5,' ')}   作者： ${item.authorName}  
+    
+    
+      
+  
+`
+    arr.push(str)
+  }
+  fs.writeFileSync(path.join('./',`${fileName}.md`), arr.join(''))
+  console.log('.md file read over')
+}

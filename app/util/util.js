@@ -514,5 +514,6 @@ module.exports = {
   stringToFile,
   delFile,
   getFilenameInfoByPath,
+  dirTree,
   downloadFileItem
 };

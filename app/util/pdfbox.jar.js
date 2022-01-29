@@ -139,9 +139,11 @@ const PDFSplit = async (params = {
   split: 1000,
   startPage: 2,
   endPage: 1000,
+  outputPrefix: 'D:\\阿里云盘\\test\\个性化成长手册'
+
 }) => {
   console.log('__dirname', __dirname)
-  const cmd = `java -jar ${__dirname}\\pdfbox.jar PDFSplit -split ${params.split} -startPage ${params.startPage} -endPage ${params.endPage} ${params.pdfLocalPath}`
+  const cmd = `java -jar ${__dirname}\\pdfbox.jar PDFSplit -split ${params.split} -startPage ${params.startPage} -endPage ${params.endPage} -outputPrefix ${params.outputPrefix} ${params.pdfLocalPath}`
 
   await new Promise((resolve, reject) => {
     const spawnObj = exec(cmd);

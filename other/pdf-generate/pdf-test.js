@@ -2,51 +2,76 @@ const path = require('path')
 const {delPath, makeDir} = require('../../app/util/util')
 const BrowserUtil = require('../../app/util/browser')
 
-// 删除文件夹下的文件
-// function delPath(path) {
-//   const fs = require('fs')
-//   // 删除文件
-//   const files = fs.readdirSync(path);
-//   // 遍历读取到的文件列表
-//   files.forEach(function (filename) {
-//     const filedir = path + '/' + filename;
-//     fs.unlinkSync(filedir);
-//   });
-//   // 删除文件夹
-//   console.log('------------------')
-//   fs.rmdirSync(path);
-// }
-
-// function makeDir(dirpath, del = true) {
-//   const fs = require('fs')
-//   const path = require('path')
-//   if (!fs.existsSync(dirpath)) {
-//     let pathtmp;
-//     dirpath.split('/').forEach(function (dirname) {
-//       if (pathtmp) {
-//         pathtmp = path.join(pathtmp, dirname);
-//       } else {
-//         // 如果在linux系统中，第一个dirname的值为空，所以赋值为"/"
-//         if (dirname) {
-//           pathtmp = dirname;
-//         } else {
-//           pathtmp = '/';
-//         }
-//       }
-//       if (!fs.existsSync(pathtmp)) {
-//         if (!fs.mkdirSync(pathtmp)) {
-//           return false;
-//         }
-//       }
-//     });
-//   } else if (del) {
-//     // 先删除已有文件夹
-//     delPath(dirpath);
-//     // 再重新建文件夹
-//     makeDir(dirpath)
-//   }
-//   return true;
-// }
+// pdfOption示例
+const pdfOptionsExp = [
+  // 1.无页头页脚
+  {
+    format: 'a4',
+    landscape: false,
+    displayHeaderFooter: false,
+    printBackground: true,
+    // headerTemplate,
+    // footerTemplate,
+    margin: {
+      top: '0px',
+      bottom: '0px',
+      left: '0px',
+      right: '0px'
+    }
+  },
+  // 2.有页头页脚
+  {
+    format: 'a4',
+    landscape: false,
+    displayHeaderFooter: true,
+    printBackground: true,
+    headerTemplate: `
+        <style>
+          .header-section {
+            margin: 0 auto;
+            font-size: 9px;
+            font-family: KaiTi,serif;
+          }
+          .header-text {
+            padding-left: 30px;
+            text-align: center;
+          }
+        </style>
+        <section class="header-section">
+            <div class="header-text">这里页头</div>
+        </section>`,
+    footerTemplate:`
+        <style>
+          .footer-box {
+            text-align: right;
+            font-size: 9px;
+            line-height: 9px;
+            font-family: KaiTi,serif;
+            border-top: 1px solid #979797;
+            width: 100%;
+            background-color: azure;
+          }
+          .footer-item {
+            padding: 0 5px;
+          }
+        </style>
+        <section class="footer-box">
+           <span class="footer-item url" ></span>
+           <span class="footer-item date" ></span>
+           <span class="footer-item title" ></span>
+           <span class="footer-item pageNumber"></span>
+           <span class="footer-item totalPages" ></span>
+           <span class="js-output" ></span>
+        </section>
+        `,
+    margin: {
+      top: '40px',
+      bottom: '40px',
+      left: '40px',
+      right: '40px'
+    }
+  }
+]
 // 生成PDF
 const generate = async data => {
   return new Promise(async (resolve, reject) => {
@@ -118,6 +143,8 @@ const generate = async data => {
     resolve()
   })
 }
+
+
 // 渲染PDF
 const renderPdf = async (url, outputDir, fileName = 'test1.pdf') => {
   // const url = `http://localhost:8098/wrong-download/render/question?recommendationId=${recommendationId}&courseName=`
@@ -151,55 +178,9 @@ const renderPdf = async (url, outputDir, fileName = 'test1.pdf') => {
   // 渲染结果（包含渲染、上传至OSS、删除本地文件）
 
   // PDF生成选项
-  let pdfOptions = null
-  const footerTemplate = `
-        <style>
-          .footer-box {
-            margin: 0 auto;
-            text-align: right;
-            font-size: 9px;
-            font-family: KaiTi,serif;
-            border-top: 1px solid #979797;
-            width: 100%;
-          }
-          .footer-item {
-            background-color: #D8D8D8!important;
-            display: inline-block;
-            padding: 0 40px;
-          }
-        </style>
-        <section class="footer-box">
-           <span class="footer-item pageNumber" ></span>
-        </section>`
-  const headerTemplate = `
-        <style>
-          .header-section {
-            margin: 0 auto;
-            font-size: 9px;
-            font-family: KaiTi,serif;
-          }
-          .exam-name {
-            padding-left: 30px;
-            text-align: center;
-          }
-        </style>
-        <section class="header-section">
-            <div class="exam-name"></div>
-        </section>`
-  pdfOptions = {
+  let pdfOptions = {
     path: `${dirPath}/${fileName}`,
-    format: 'a4',
-    landscape: false,
-    displayHeaderFooter: false,
-    printBackground: true,
-    // headerTemplate,
-    // footerTemplate,
-    margin: {
-      top: '0px',
-      bottom: '0px',
-      left: '0px',
-      right: '0px'
-    }
+    ...pdfOptionsExp[1]
   }
   // 浏览器
   let browser = null
@@ -250,4 +231,4 @@ const renderPdf = async (url, outputDir, fileName = 'test1.pdf') => {
   return resData
 }
 
-renderPdf(path.join(__dirname, 'print-demo.html'), __dirname, 'test.pdf')
+renderPdf(path.join(__dirname, 'print-blank.html'), __dirname, 'test.pdf')

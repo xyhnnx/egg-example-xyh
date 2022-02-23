@@ -86,14 +86,20 @@ class BrowserUtil {
    * @return {Promise<void>}
    */
   static async close (id) {
-    // 连接当前浏览器
-    const browser = await puppeteer.connect({
-      browserWSEndpoint: store.browsers[id].endpoint
-    })
-    // 关闭当前浏览器
-    await browser.close()
-    // 清空store中的节点
-    delete store.browsers[id]
+    try {
+      if (store.browsers[id]) {
+        // 连接当前浏览器
+        const browser = await puppeteer.connect({
+          browserWSEndpoint: store.browsers[id].endpoint
+        })
+        // 关闭当前浏览器
+        await browser.close()
+        // 清空store中的节点
+        delete store.browsers[id]
+      }
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   /**

@@ -1,0 +1,62 @@
+<!--
+css 打印样式
+参考https://www.w3cplus.com/css/designing-for-print-with-css.html
+-->
+<html>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+  }
+
+  .one-page {
+    /*要强制标题总是处于页面开头，把page-break-before设置为always著作权归作者所有。*/
+    page-break-before: always;
+    /*为了避免标题后立即断页，使用page-break-after著作权归作者所有*/
+    page-break-after: avoid;
+    /*为了避免断开图像和表格，使用page-break-inside属性著作权归作者所有。*/
+    page-break-inside: avoid;
+  }
+
+  .cover {
+    background: azure;
+    text-align: center;
+    line-height: 500px;
+    height: 100%;
+  }
+
+  @page {
+    /*a4 横向*/
+    /*size: A4 landscape;*/
+    size: A4;
+  }
+
+  /*首页*/
+  @page :first {
+    margin: 0;
+  }
+
+  /*奇数页*/
+  @page :left {
+    margin: 20px 20px 20px 40px;
+  }
+
+  /*偶数页*/
+  @page :right {
+    margin: 20px 40px 20px 20px;
+  }
+</style>
+<body>
+<div class="one-page cover">1</div>
+<div class="one-page">2
+</div>
+<div class="one-page">3
+</div>
+<div class="one-page">4
+</div>
+<div class="one-page">5
+</div>
+
+<div id="renderFinish"></div>
+</body>
+</html>

@@ -16,7 +16,7 @@ const index = async () => {
   const pdfDoc = await PDFDocument.load(pdfBuff)
   console.log(pdfDoc.getPages()[0].doc)
 }
-index()
+// index()
 
 /**
  * 新建一个新空白的PDF
@@ -32,8 +32,8 @@ const createBlankPage = async () => {
 /**
  * 获取PDF页码总数
  */
-const getPageCount = async () => {
-  const PDFBuffer = fs.readFileSync('./test-origin.pdf')
+const getPDFPageCount = async (localFilePath = './test-origin.pdf') => {
+  const PDFBuffer = fs.readFileSync(localFilePath)
   const pdfDoc = await PDFDocument.load(PDFBuffer)
   const count = pdfDoc.getPageCount()
   console.log(`pdf页码数：${count}`)
@@ -298,6 +298,32 @@ const embedPDFPages = async () => {
   fs.writeFileSync('./output/test-embed_pdf_pages.pdf', pdfBytes)
 }
 
+/**
+ * 合并多个PDF为一个PDF文件
+ * 这个是使用的pdf-lib 对PDF进行合并
+ */
+const mergePDF = async ({
+  sourceFiles,
+  outputFile,
+}) => {
+  const pdfDoc = await PDFDocument.create()
+  for(let i = 0;i<sourceFiles.length;i++) {
+    const localPath = sourceFiles[i]
+    const PDFItem = await PDFDocument.load(fs.readFileSync(localPath))
+    for(let j = 0;j<PDFItem.getPageCount();j++) {
+      const [PDFPageItem] = await pdfDoc.copyPages(PDFItem, [j])
+      pdfDoc.addPage(PDFPageItem)
+    }
+  }
+  const pdfBytes = await pdfDoc.save()
+  fs.writeFileSync(outputFile, pdfBytes)
+
+}
+
+module.exports = {
+  getPDFPageCount,
+  mergePDF
+}
 
 
 

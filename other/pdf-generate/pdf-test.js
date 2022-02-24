@@ -180,7 +180,7 @@ const renderPdf = async (url, outputDir, fileName = 'test1.pdf') => {
   // PDF生成选项
   let pdfOptions = {
     path: `${dirPath}/${fileName}`,
-    ...pdfOptionsExp[1]
+    ...pdfOptionsExp[0]
   }
   // 浏览器
   let browser = null

@@ -168,17 +168,18 @@ const PDFSplit = async (params = {
     })
   })
 }
-
-const PDFMerger = async (params = {
-  pdfFileList: [
-    'D:/阿里云盘/test/cover.pdf',
-    'D:/阿里云盘/test/《云上朗读者》.pdf'
-  ],
-  outputFile: 'D:/阿里云盘/test/merge/output.pdf'
+/**
+ * 这个是用pdfbox.jar 对PDF进行合并
+ * @param sourceFiles
+ * @param outputFile
+ */
+const PDFMerger = async ({
+  sourceFiles,
+  outputFile
 }) => {
-  makeDir(getFilenameInfoByPath(params.outputFile).fileDir)
-  const  fileListString = params.pdfFileList.join(' ')
-  const cmd = `java -jar ${__dirname}\\pdfbox.jar PDFMerger ${fileListString} ${params.outputFile}`
+  makeDir(getFilenameInfoByPath(outputFile).fileDir)
+  const  fileListString = sourceFiles.join(' ')
+  const cmd = `java -jar ${__dirname}\\pdfbox.jar PDFMerger ${fileListString} ${outputFile}`
   console.log(cmd)
   await new Promise((resolve, reject) => {
     const spawnObj = exec(cmd);
@@ -204,7 +205,43 @@ const PDFMerger = async (params = {
   })
 }
 
+
+/**
+ * 合并PDF
+ * 这个是使用easy-pdf-merge 对PDF合并
+ * @param sourceFiles
+ * @param outputFile
+ */
+const easyPDFmerge = ({
+  sourceFiles,
+  outputFile
+}) => {
+  const mergeUtil = require('easy-pdf-merge')
+  return new Promise(resolve => {
+    const startTime = new Date()
+    mergeUtil(sourceFiles, outputFile, err => {
+      // 合并失败
+      if (err) {
+        // 抛出异常
+        resolve({
+          status: 1,
+          err
+        })
+      } else {
+        // 合并成功
+        const endTime = new Date()
+        // 返回合并耗时
+        resolve({
+          status: 0,
+          time: endTime - startTime
+        })
+      }
+    })
+  })
+}
+
 const utils = {
+  easyPDFmerge,
   PDFMerger,
   PDFSplit,
   OverlayPDF,

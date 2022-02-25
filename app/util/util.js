@@ -491,11 +491,33 @@ function zipDir (inputDirPath, outFilePath, password) {
 }
 // zipDir('D:\\home\\xyh-test', 'D:\\home\\', '123')
 
+
+/**
+ * 模板引擎 方法1
+ * 使用node的vm 模块
+ */
+const  templateCompile1 = (template, data) => {
+  const vm = require('vm')
+  return vm.runInNewContext(`\`${template}\``, data)
+}
+/**
+ * 模板引擎 方法2
+ * 使用new function的方法
+ */
+const  templateCompile2 = (template, data) => {
+  const fun = new Function(`${Object.keys(data).join(',')}`, `return \`${template}\``)
+  return fun(...Object.values(data))
+}
+// const data = templateCompile1('---${name}==', {name: 'xxxcccfsdf'})
+// console.log(data)
+
+
 module.exports = {
   makeDir,
   getStandardFilePath,
   zipDir,
   delPath,
+  getFileList:geFileList,
   geFileList,
   getDirSize,
   getBufferMd5,

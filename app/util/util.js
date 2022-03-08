@@ -537,5 +537,6 @@ module.exports = {
   delFile,
   getFilenameInfoByPath,
   dirTree,
-  downloadFileItem
+  downloadFileItem,
+  templateCompile1
 };

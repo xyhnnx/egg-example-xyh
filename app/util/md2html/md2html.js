@@ -63,7 +63,7 @@ const md2html = ({theme, inputPath, outputPath}) => {
 }
 
 md2html({
-    theme: 'theme2',
+    theme: 'theme1',
     inputPath: path.resolve(__dirname, './md'),
     outputPath: path.resolve(__dirname, './output')
 })

@@ -102,7 +102,7 @@ const generate = async data => {
             data.logger.error(err)
           }
           // throw new Error(err)
-          reject(err)
+          // reject(err)
         }
       })
 
@@ -215,7 +215,7 @@ const renderPdf = async (url, outputDir, fileName = 'test1.pdf') => {
       browser,
       pdfOptions,
       url,
-      timeout: 120 * 1000,
+      timeout: 600 * 1000,
     })
     console.log(`渲染PDF完毕---${url}`)
     // 删除本地文件
@@ -231,4 +231,6 @@ const renderPdf = async (url, outputDir, fileName = 'test1.pdf') => {
   return resData
 }
 
-renderPdf(path.join(__dirname, 'print-blank.html'), __dirname, 'test.pdf')
+// renderPdf(path.join(__dirname, 'print-blank.html'), __dirname, 'test.pdf')
+const httpUrl = 'http://localhost:8087/wrong-download/render/question?gradeName=2020%E7%BA%A7%E5%85%AB%E5%B9%B4%E7%BA%A7&gradeId=9790&examName=2022%E5%B9%B43%E6%9C%8815%E6%97%A5%20%E7%AC%AC5%E5%91%A8%E5%85%AB%E5%B9%B4%E7%BA%A7%EF%BC%88%E4%B8%8B%EF%BC%89%E6%95%B0%E5%AD%A6%E7%BB%9F%E6%B5%8B&className=803&studentId=110654725453&classId=62692&courseName=%E6%95%B0%E5%AD%A6&wrongBookId=406&fileSize=1704991&fileStatus=4&paperName=%E7%AC%AC5%E5%91%A8%E5%85%AB%E5%B9%B4%E7%BA%A7%EF%BC%88%E4%B8%8B%EF%BC%89%E6%95%B0%E5%AD%A6%E7%BB%9F%E6%B5%8B&schoolId=1501&studentName=%E9%9B%B7%E7%A3%8A&examId=1197231&finishedTime=1648203113000&fileUrl=expire%2F3%2Fexport%2Fwrong-download-v3%2Fpdf-item%2F406_110654725453_13%2F1648203113362%2F80335_803_%E9%9B%B7%E7%A3%8A_%E6%95%B0%E5%AD%A6.pdf&logoStatus=1&schoolName=%E4%BD%9B%E5%B1%B1%E5%8D%97%E6%B5%B7%E5%B0%8F%E5%A1%98%E4%B8%AD%E5%AD%A6&courseId=13&studentNum=80335&paperId=1341863071332875&studentKey=110654725453-13'
+renderPdf(httpUrl, 'test2.pdf')

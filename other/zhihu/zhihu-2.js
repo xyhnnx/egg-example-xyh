@@ -1,6 +1,7 @@
 const BrowserUtil = require('../../app/util/browser')
 const fetch = require('../../app/util/fetch')
-
+const fs = require('fs')
+const path = require('path')
 const Util = require('../../app/util/util')
 const puppeteer = require('puppeteer')
 const MysqlUtil = require('../../app/util/mysql')
@@ -209,7 +210,7 @@ async function answers () {
   }
 }
 
-answers()
+// answers()
 
 
 // 获取潜力问题
@@ -395,48 +396,11 @@ async function getAnswerInfoAll () {
   getAnswerInfoAll()
 }
 
-getAnswerInfoAll()
+// getAnswerInfoAll()
 
 
 
 
-
-
-
-const sqlEssenceAnswer2md = async () => {
-  let mysqlInstance = new MysqlUtil('xyh_test')
-  let res = await mysqlInstance.query(`
-              SELECT t_zhihu_answers.answer_id,
-                     t_zhihu_answers.question_id,
-                     t_zhihu_answers.voteup_count,
-                     t_zhihu_answers_info.question_title,
-                     t_zhihu_answers_info.author_name
-              FROM t_zhihu_answers
-              INNER JOIN t_zhihu_answers_info
-              ON t_zhihu_answers.answer_id = t_zhihu_answers_info.answer_id
-              ORDER BY t_zhihu_answers.voteup_count DESC LIMIT 10
-              `)
-
-  console.log(res)
-  const list = res.map(e => {
-    let url
-    if(e.answer_id && e.question_id) {
-      url = `https://www.zhihu.com/question/${e.question_id}/answer/${e.answer_id}`
-    } else {
-      url = `http://zhuanlan.zhihu.com/p/${e.answer_id}`
-    }
-
-    return {
-      title: e.question_title,
-      url: url,
-      voteupCount: e.voteup_count,
-      authorName: e.author_name,
-    }
-  })
-  this.json2md(list, 'top')
-}
-
-// sqlEssenceAnswer2md()
 
 
 const json2md = (json, fileName) => {
@@ -455,3 +419,43 @@ const json2md = (json, fileName) => {
   fs.writeFileSync(path.join('./',`${fileName}.md`), arr.join(''))
   console.log('.md file read over')
 }
+
+const sqlEssenceAnswer2md = async () => {
+  console.log('sqlEssenceAnswer2mdsqlEssenceAnswer2md')
+  let mysqlInstance = new MysqlUtil('xyh_test')
+  let res = await mysqlInstance.query(`
+              SELECT t_zhihu_answers.answer_id,
+                     t_zhihu_answers.question_id,
+                     t_zhihu_answers.voteup_count,
+                     t_zhihu_answers_info.question_title,
+                     t_zhihu_answers_info.author_name
+              FROM t_zhihu_answers
+              INNER JOIN t_zhihu_answers_info
+              ON t_zhihu_answers.answer_id = t_zhihu_answers_info.answer_id
+              ORDER BY t_zhihu_answers.voteup_count DESC LIMIT 100
+              `)
+
+  console.log(res)
+  const list = res.map(e => {
+    let url
+    if(e.answer_id && e.question_id) {
+      url = `https://www.zhihu.com/question/${e.question_id}/answer/${e.answer_id}`
+    } else {
+      url = `http://zhuanlan.zhihu.com/p/${e.answer_id}`
+    }
+
+    return {
+      title: e.question_title,
+      url: url,
+      voteupCount: e.voteup_count,
+      authorName: e.author_name,
+    }
+  })
+  json2md(list, 'top')
+}
+
+sqlEssenceAnswer2md()
+
+
+
+console.log('xxx')
